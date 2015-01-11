@@ -26,12 +26,12 @@ public class RectEditPanel extends JPanel
     
     final float padRatio = 0.1f;
     
-     // grid goes from (0,0) to (W, H)
+     // grid coords go from (0,0) to (W, H)
     AffineTransform gridToScreenTransform;
     AffineTransform screenToGridTransform;
     
     Boolean dragColor = null;
-    Float dragTheta = null;
+    Float dragHandleY = null;
     
     public RectEditPanel(EditorService editorService) {
         this.editorService = editorService;
@@ -101,34 +101,50 @@ public class RectEditPanel extends JPanel
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                Point cell = fromScreenToGrid(e.getPoint());
+                Point p = e.getPoint();
+                Point cell = fromScreenToGrid(p);
                 if (cell != null) {
                     dragColor = !slice[cell.x][cell.y];
-                    affectSliceWithMouseDrag(cell);
+                } else {
+                    Float y = fromScreenToHandleTrack(p);
+                    if (y != null) {
+                        dragHandleY = y;
+                    }
                 }
+                handleMousePoint(p);
             }
             @Override
             public void mouseReleased(MouseEvent e) {
-                Point cell = fromScreenToGrid(e.getPoint());
-                affectSliceWithMouseDrag(cell);
+                handleMousePoint(e.getPoint());
                 dragColor = null;
+                dragHandleY = null;
+                repaint();
             }
         });
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                Point cell = fromScreenToGrid(e.getPoint());
-                affectSliceWithMouseDrag(cell);
+                handleMousePoint(e.getPoint());
             }
         });
     }
     
-    private void affectSliceWithMouseDrag(Point cell) {
-        if (cell != null && dragColor != null
-                && dragColor != slice[cell.x][cell.y]) {
-            slice[cell.x][cell.y] = dragColor;
-            editorService.setRadialSlice(slice);
-            repaint();
+    private void handleMousePoint(Point p) {
+        if (dragColor != null) {
+            Point cell = fromScreenToGrid(p);
+            if (cell != null && dragColor != slice[cell.x][cell.y]) {
+                slice[cell.x][cell.y] = dragColor;
+                editorService.setRadialSlice(slice);
+                repaint();
+            }
+        } else if (dragHandleY != null) {
+            Float y = fromScreenToHandleTrack(p);
+            if (y != null) {
+                dragHandleY = y - 0.5f;
+                int yInt = (int)Math.floor(y);
+                editorService.setY(yInt);
+                repaint();
+            }
         }
     }
     
@@ -136,8 +152,18 @@ public class RectEditPanel extends JPanel
         Point2D result = screenToGridTransform.transform(p, null);
         double x = result.getX();
         double y = result.getY();
-        if (x >= 0 && y >= 0 && x < W && y < W) {
+        if (x >= 0 && y >= 0 && x < W && y < H) {
             return new Point((int)x, (int)y);
+        }
+        return null;
+    }
+    
+    private Float fromScreenToHandleTrack(Point p) {
+        Point2D result = screenToGridTransform.transform(p, null);
+        double x = result.getX();
+        double y = result.getY();
+        if (x >= W && y >= 0 && x <= W+1 && y < H) {
+            return (float)y;
         }
         return null;
     }
@@ -190,7 +216,8 @@ public class RectEditPanel extends JPanel
         p.lineTo(1, 0);
         p.lineTo(1, 1);
         p.closePath();
-        p.transform(AffineTransform.getTranslateInstance(W, theta));
+        float y = dragHandleY==null ? editorService.getY() : dragHandleY;
+        p.transform(AffineTransform.getTranslateInstance(W, y));
         p.transform(gridToScreenTransform);
         g.setColor(Color.red);
         g.fill(p);
