@@ -30,7 +30,8 @@ public class RectEditPanel extends JPanel
     AffineTransform gridToScreenTransform;
     AffineTransform screenToGridTransform;
     
-    Boolean dragType = null;
+    Boolean dragColor = null;
+    Float dragTheta = null;
     
     public RectEditPanel(EditorService editorService) {
         this.editorService = editorService;
@@ -39,6 +40,7 @@ public class RectEditPanel extends JPanel
         slice = editorService.getRadialSlice();
         
         wireServiceEvents();
+        wireComponentEvents();
         wireMouseEvents();
     }
     
@@ -46,7 +48,7 @@ public class RectEditPanel extends JPanel
         editorService.addListener(new EditorService.Listener() {
             @Override
             public void frameChanged() {
-                if (dragType == null) {
+                if (dragColor == null) {
                     slice = editorService.getRadialSlice();
                     repaint();
                 }
@@ -64,35 +66,67 @@ public class RectEditPanel extends JPanel
         });
     }
     
+    private void wireComponentEvents() {
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateTransforms();
+            }
+        });
+    }
+    
+    private void updateTransforms() {
+        float panelWidth = getWidth() * (1 - padRatio*2);
+        float panelHeight = getHeight() * (1 - padRatio*2);
+        // Avoid expensive divide operators; rearranged to use multiply instead.
+        // Use W+1 to accommodate slider on right.
+        boolean isPanelAspectWiderThanGridAspect = (W+1) * panelHeight
+                                                  < panelWidth * H;
+        float scale = isPanelAspectWiderThanGridAspect
+            ? (panelHeight / H)
+            : (panelWidth / (W+1));
+        
+        float gridOffX = getWidth() * padRatio;
+        float gridOffY = getHeight() * padRatio;
+        gridToScreenTransform = AffineTransform.getTranslateInstance(gridOffX, gridOffY);
+        gridToScreenTransform.scale(scale, scale);
+        try {
+            screenToGridTransform = gridToScreenTransform.createInverse();
+        } catch (NoninvertibleTransformException ex) {
+            Logger.getLogger(RectEditPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     private void wireMouseEvents() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 Point cell = fromScreenToGrid(e.getPoint());
                 if (cell != null) {
-                    dragType = !slice[cell.x][cell.y];
-                    affectWithMouseDrag(cell);
+                    dragColor = !slice[cell.x][cell.y];
+                    affectSliceWithMouseDrag(cell);
                 }
             }
             @Override
             public void mouseReleased(MouseEvent e) {
                 Point cell = fromScreenToGrid(e.getPoint());
-                affectWithMouseDrag(cell);
-                dragType = null;
+                affectSliceWithMouseDrag(cell);
+                dragColor = null;
             }
         });
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 Point cell = fromScreenToGrid(e.getPoint());
-                affectWithMouseDrag(cell);
+                affectSliceWithMouseDrag(cell);
             }
         });
     }
     
-    private void affectWithMouseDrag(Point cell) {
-        if (cell != null && dragType != slice[cell.x][cell.y]) {
-            slice[cell.x][cell.y] = dragType;
+    private void affectSliceWithMouseDrag(Point cell) {
+        if (cell != null && dragColor != null
+                && dragColor != slice[cell.x][cell.y]) {
+            slice[cell.x][cell.y] = dragColor;
             editorService.setRadialSlice(slice);
             repaint();
         }
@@ -111,26 +145,14 @@ public class RectEditPanel extends JPanel
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
-        int width = getWidth();
-        int height = getHeight();
         
         // clear background
         g.setColor(Color.white);
         g2.fill(g.getClip());
         
-        // grid
-        float gridOffX = width * padRatio;
-        float gridCellWidth = width * (1 - padRatio*2) / W;
-        float gridOffY = height * padRatio;
-        float gridCellHeight = height * (1 - padRatio*2) / H;
-        gridToScreenTransform = AffineTransform.getTranslateInstance(gridOffX, gridOffY);
-        gridToScreenTransform.scale(gridCellWidth, gridCellHeight);
-        try {
-            screenToGridTransform = gridToScreenTransform.createInverse();
-        } catch (NoninvertibleTransformException ex) {
-            Logger.getLogger(RectEditPanel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        // paint children
         paintGrid(g2);
+        paintHandle(g2);
     }
     
     void paintGrid(Graphics2D g) {
@@ -160,5 +182,19 @@ public class RectEditPanel extends JPanel
                 }
             }
         }
+    }
+    
+    void paintHandle(Graphics2D g) {
+        Path2D.Float p = new Path2D.Float();
+        p.moveTo(0, .5);
+        p.lineTo(1, 0);
+        p.lineTo(1, 1);
+        p.closePath();
+        p.transform(AffineTransform.getTranslateInstance(W, theta));
+        p.transform(gridToScreenTransform);
+        g.setColor(Color.red);
+        g.fill(p);
+        g.setColor(Color.black);
+        g.draw(p);
     }
 }
