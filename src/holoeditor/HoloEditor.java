@@ -40,7 +40,7 @@ public class HoloEditor {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             editorService = new EditorService();
-            editorService.setFrame(new holoeditor.model.Frame(8, 8, 32));
+            editorService.setFrame(new holoeditor.model.Frame(32, 8, 8));
             editorFrame = new EditorJFrame(editorService);
             editorFrame.setVisible(true);
         });

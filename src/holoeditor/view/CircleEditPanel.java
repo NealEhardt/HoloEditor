@@ -15,13 +15,13 @@ import javax.swing.*;
  */
 public class CircleEditPanel extends JPanel
 {
-    final int R, D;
+    final int C, R;
     EditorService editorService;
     
     public CircleEditPanel(EditorService editorService) {
         this.editorService = editorService;
+        C = editorService.getFrame().circumference;
         R = editorService.getFrame().radius;
-        D = editorService.getFrame().diameter;
     }
     
     @Override

@@ -19,7 +19,7 @@ import javax.swing.*;
  */
 public class RectEditPanel extends JPanel
 {
-    final int W, H;
+    final int H, R;
     boolean[][] slice;
     int theta;
     EditorService editorService;
@@ -35,8 +35,8 @@ public class RectEditPanel extends JPanel
     
     public RectEditPanel(EditorService editorService) {
         this.editorService = editorService;
-        W = editorService.getFrame().radius;
         H = editorService.getFrame().height;
+        R = editorService.getFrame().radius;
         slice = editorService.getRadialSlice();
         
         wireServiceEvents();
@@ -79,12 +79,12 @@ public class RectEditPanel extends JPanel
         float panelWidth = getWidth() * (1 - padRatio*2);
         float panelHeight = getHeight() * (1 - padRatio*2);
         // Avoid expensive divide operators; rearranged to use multiply instead.
-        // Use W+1 to accommodate slider on right.
-        boolean isPanelAspectWiderThanGridAspect = (W+1) * panelHeight
+        // Use R+1 to accommodate slider on right.
+        boolean isPanelAspectWiderThanGridAspect = (R+1) * panelHeight
                                                   < panelWidth * H;
         float scale = isPanelAspectWiderThanGridAspect
             ? (panelHeight / H)
-            : (panelWidth / (W+1));
+            : (panelWidth / (R+1));
         
         float gridOffX = getWidth() * padRatio;
         float gridOffY = getHeight() * padRatio;
@@ -104,7 +104,7 @@ public class RectEditPanel extends JPanel
                 Point p = e.getPoint();
                 Point cell = fromScreenToGrid(p);
                 if (cell != null) {
-                    dragColor = !slice[cell.x][cell.y];
+                    dragColor = !slice[cell.y][cell.x];
                 } else {
                     Float y = fromScreenToHandleTrack(p);
                     if (y != null) {
@@ -132,8 +132,8 @@ public class RectEditPanel extends JPanel
     private void handleMousePoint(Point p) {
         if (dragColor != null) {
             Point cell = fromScreenToGrid(p);
-            if (cell != null && dragColor != slice[cell.x][cell.y]) {
-                slice[cell.x][cell.y] = dragColor;
+            if (cell != null && dragColor != slice[cell.y][cell.x]) {
+                slice[cell.y][cell.x] = dragColor;
                 editorService.setRadialSlice(slice);
                 repaint();
             }
@@ -152,7 +152,7 @@ public class RectEditPanel extends JPanel
         Point2D result = screenToGridTransform.transform(p, null);
         double x = result.getX();
         double y = result.getY();
-        if (x >= 0 && y >= 0 && x < W && y < H) {
+        if (x >= 0 && y >= 0 && x < R && y < H) {
             return new Point((int)x, (int)y);
         }
         return null;
@@ -162,7 +162,7 @@ public class RectEditPanel extends JPanel
         Point2D result = screenToGridTransform.transform(p, null);
         double x = result.getX();
         double y = result.getY();
-        if (x >= W && y >= 0 && x <= W+1 && y < H) {
+        if (x >= R && y >= 0 && x <= R+1 && y < H) {
             return (float)y;
         }
         return null;
@@ -171,6 +171,9 @@ public class RectEditPanel extends JPanel
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
+        if (gridToScreenTransform == null) {
+            return; // this happens at exit
+        }
         
         // clear background
         g.setColor(Color.white);
@@ -182,31 +185,30 @@ public class RectEditPanel extends JPanel
     }
     
     void paintGrid(Graphics2D g) {
-        g.setColor(Color.lightGray);
-        Line2D line = new Line2D.Float();
+        // fill cells
+        Rectangle2D rect = new Rectangle2D.Float();
+        g.setColor(Color.black);
+        for (int x = 0; x < R; x++) {
+            for (int y = 0; y < H; y++) {
+                if (!slice[y][x]) {
+                    rect.setFrame(x, y, 1, 1);
+                    g.fill(gridToScreenTransform.createTransformedShape(rect));
+                }
+            }
+        }
         
         // vertical lines
-        for (int x = 0; x <= W; x++) {
+        g.setColor(Color.lightGray);
+        Line2D line = new Line2D.Float();
+        for (int x = 0; x <= R; x++) {
             line.setLine(x, 0, x, H);
             g.draw(gridToScreenTransform.createTransformedShape(line));
         }
         
         // horizontal lines
         for (int y = 0; y <= H; y++) {
-            line.setLine(0, y, W, y);
+            line.setLine(0, y, R, y);
             g.draw(gridToScreenTransform.createTransformedShape(line));
-        }
-        
-        // fill cells
-        Rectangle2D rect = new Rectangle2D.Float();
-        g.setColor(Color.black);
-        for (int x = 0; x < W; x++) {
-            for (int y = 0; y < H; y++) {
-                if (slice[x][y]) {
-                    rect.setFrame(x, y, 1, 1);
-                    g.fill(gridToScreenTransform.createTransformedShape(rect));
-                }
-            }
         }
     }
     
@@ -217,7 +219,7 @@ public class RectEditPanel extends JPanel
         p.lineTo(1, 1);
         p.closePath();
         float y = dragHandleY==null ? editorService.getY() : dragHandleY;
-        p.transform(AffineTransform.getTranslateInstance(W, y));
+        p.transform(AffineTransform.getTranslateInstance(R, y));
         p.transform(gridToScreenTransform);
         g.setColor(Color.red);
         g.fill(p);
