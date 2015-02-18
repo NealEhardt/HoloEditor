@@ -93,7 +93,9 @@ public class RectEditPanel extends JPanel
         try {
             screenToGridTransform = gridToScreenTransform.createInverse();
         } catch (NoninvertibleTransformException ex) {
-            Logger.getLogger(RectEditPanel.class.getName()).log(Level.SEVERE, null, ex);
+            // paint() will fail gracefully
+            gridToScreenTransform = null;
+            screenToGridTransform = null;
         }
     }
     

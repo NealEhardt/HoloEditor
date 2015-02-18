@@ -18,6 +18,8 @@ public class HoloEditor {
 
     static EditorJFrame editorFrame;
     static EditorService editorService;
+    static SerialService serialService;
+    static FileService fileService;
     
     public static void main(String[] args) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting ">
