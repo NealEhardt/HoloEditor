@@ -81,13 +81,18 @@ public class RectEditPanel extends JPanel
         // Avoid expensive divide operators; rearranged to use multiply instead.
         // Use R+1 to accommodate slider on right.
         boolean isPanelAspectWiderThanGridAspect = (R+1) * panelHeight
-                                                  < panelWidth * H;
+                                                  < H * panelWidth;
         float scale = isPanelAspectWiderThanGridAspect
             ? (panelHeight / H)
             : (panelWidth / (R+1));
         
         float gridOffX = getWidth() * padRatio;
         float gridOffY = getHeight() * padRatio;
+        if (isPanelAspectWiderThanGridAspect) {
+            gridOffX += (panelWidth - (R+1) * scale) / 2;
+        } else {
+            gridOffY += (panelHeight - H * scale) / 2;
+        }
         gridToScreenTransform = AffineTransform.getTranslateInstance(gridOffX, gridOffY);
         gridToScreenTransform.scale(scale, scale);
         try {
