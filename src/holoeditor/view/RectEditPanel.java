@@ -9,8 +9,6 @@ import holoeditor.service.EditorService;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.*;
 
 /**
