@@ -6,19 +6,10 @@
 package holoeditor.service;
 
 import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.UnsupportedCommOperationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Queue;
-import java.util.TooManyListenersException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ArrayDeque;
+import java.util.Collections;
 
 /**
  * Reads and writes to Arduino over serial.
@@ -27,6 +18,7 @@ import java.util.logging.Logger;
  */
 public class SerialService {
     
+    Queue<CommPortIdentifier> ports;
     SerialPortWorker worker;
     
     ArrayList<Listener> listeners = new ArrayList<>();
@@ -39,24 +31,26 @@ public class SerialService {
     }
     
     public SerialService() {
-        
+        tryNextPort();
     }
     
-    public void scanPorts() {
-        while(true) {
-            Enumeration<?> ports = CommPortIdentifier.getPortIdentifiers();
-            while(ports.hasMoreElements()) {
-                CommPortIdentifier portId = (CommPortIdentifier)ports.nextElement();
-                worker = new SerialPortWorker(portId);
-                worker.addPropertyChangeListener((evt) -> {
-                    System.out.println(evt.getPropertyName() + " = " + evt.getNewValue());
-                });
-                worker.execute();
-                
-                for (Listener l : listeners) {
-                    l.connectedToPort(portId.getName());
-                }
+    private void tryNextPort() {
+        if (ports == null || ports.isEmpty()) {
+            ports = new ArrayDeque<>(Collections.list(CommPortIdentifier.getPortIdentifiers()));
+        }
+        CommPortIdentifier portId = (CommPortIdentifier)ports.poll();
+        
+        System.out.println("Connecting to "+portId.getName());
+        worker = new SerialPortWorker(portId);
+        worker.addPropertyChangeListener((evt) -> {
+            if (worker.isDone()) {
+                tryNextPort();
             }
+        });
+        worker.execute();
+
+        for (Listener l : listeners) {
+            l.connectedToPort(portId.getName());
         }
     }
     

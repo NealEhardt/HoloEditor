@@ -39,6 +39,8 @@ public class HoloEditor {
         }
         //</editor-fold>
 
+        serialService = new SerialService();
+        
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             editorService = new EditorService();
