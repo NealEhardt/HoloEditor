@@ -61,7 +61,7 @@ public class Frame implements Serializable
      * @return theta [0, circumference) * x [0, radius)
      */
     public boolean[][] getCircularSlice(int y) {
-        boolean[][] slice = new boolean[radius][];
+        boolean[][] slice = new boolean[circumference][];
         for (int theta = 0; theta < circumference; theta++) {
             slice[theta] = data[theta][y].clone();
         }

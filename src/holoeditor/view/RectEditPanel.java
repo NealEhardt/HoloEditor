@@ -167,8 +167,15 @@ public class RectEditPanel extends JPanel
         Point2D result = screenToGridTransform.transform(p, null);
         double x = result.getX();
         double y = result.getY();
-        if (x >= R && y >= 0 && x <= R+1 && y < H) {
-            return (float)y;
+        if ((x >= R && y >= 0 && x <= R+1 && y < H) || dragHandleY != null) {
+            float yOut = (float)y;
+            if (yOut < 0) {
+                yOut = 0;
+            }
+            if (yOut >= H) {
+                yOut = H-.001f;
+            }
+            return yOut;
         }
         return null;
     }
