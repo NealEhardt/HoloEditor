@@ -19,19 +19,32 @@ public class EditorJFrame extends javax.swing.JFrame
     RectEditPanel rectPanel;
     
     EditorService editorService;
+    SerialService serialService;
 
-    public EditorJFrame(EditorService editorService) {
+    public EditorJFrame(EditorService editorService, SerialService serialService) {
         super("HoloEditor"); // set frame title
         
         this.editorService = editorService;
-        
-        Container pane = getContentPane();
-        circlePanel = new CircleEditPanel(editorService);
-        pane.add(circlePanel);
-        rectPanel = new RectEditPanel(editorService);
-        pane.add(rectPanel);
+        this.serialService = serialService;
         
         initComponents();
+        
+        circlePanel = new CircleEditPanel(editorService);
+        centerPanel.add(circlePanel);
+        rectPanel = new RectEditPanel(editorService);
+        centerPanel.add(rectPanel);
+        
+        statusLabel.setText("Starting...");
+        serialService.addListener(new SerialService.Adapter () {
+            @Override
+            public void scanningPort(String portName) {
+                statusLabel.setText("Scanning port "+portName+"...");
+            }
+            @Override
+            public void connectedToPort(String portName) {
+                statusLabel.setText("Connected to port "+portName+".");
+            }
+        });
         
         setSize(700, 400);
     }
@@ -45,12 +58,42 @@ public class EditorJFrame extends javax.swing.JFrame
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        centerPanel = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        statusLabel = new javax.swing.JLabel();
+        reconnectButton = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        getContentPane().setLayout(new java.awt.GridLayout(1, 2));
+
+        centerPanel.setLayout(new java.awt.GridLayout());
+        getContentPane().add(centerPanel, java.awt.BorderLayout.CENTER);
+
+        jPanel1.setLayout(new java.awt.BorderLayout());
+
+        statusLabel.setText("jLabel1");
+        jPanel1.add(statusLabel, java.awt.BorderLayout.CENTER);
+
+        reconnectButton.setText("Reconnect");
+        reconnectButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                reconnectButtonActionPerformed(evt);
+            }
+        });
+        jPanel1.add(reconnectButton, java.awt.BorderLayout.LINE_END);
+
+        getContentPane().add(jPanel1, java.awt.BorderLayout.PAGE_END);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void reconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reconnectButtonActionPerformed
+        serialService.tryNextPort();
+    }//GEN-LAST:event_reconnectButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel centerPanel;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JButton reconnectButton;
+    private javax.swing.JLabel statusLabel;
     // End of variables declaration//GEN-END:variables
 }

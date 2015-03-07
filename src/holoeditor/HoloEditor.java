@@ -38,15 +38,15 @@ public class HoloEditor {
             Logger.getLogger(EditorJFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
-        serialService = new SerialService();
         
-        /* Create and display the form */
+        /* Inversion of control (all instances made here) */
         java.awt.EventQueue.invokeLater(() -> {
-            editorService = new EditorService();
+            serialService = new SerialService();
+            editorService = new EditorService(serialService);
             editorService.setFrame(new holoeditor.model.Frame(32, 8, 8));
-            editorFrame = new EditorJFrame(editorService);
+            editorFrame = new EditorJFrame(editorService, serialService);
             editorFrame.setVisible(true);
+            serialService.tryNextPort();
         });
     }
 }

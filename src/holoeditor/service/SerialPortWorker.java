@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
@@ -25,34 +25,49 @@ import javax.swing.SwingWorker;
  *
  * @author Neal
  */
-public class SerialPortWorker extends SwingWorker<Void, byte[]> {
+public class SerialPortWorker extends SwingWorker<Void, String> {
     
-    CommPortIdentifier portId;
+    public final CommPortIdentifier portId;
     SerialPort port;
 
     InputStream input;
     OutputStream output;
+    boolean isConnected;
+    final String disconnectSignal = new String();
     
-    final Queue<byte[]> writeQueue = new ConcurrentLinkedQueue<>();
+    final BlockingQueue<String> writeQueue = new LinkedBlockingQueue<>();
     
     public SerialPortWorker(CommPortIdentifier portId) {
         this.portId = portId;
     }
     
-    public void writePacket(byte[] packet) {
+    public void writePacket(String packet) {
         writeQueue.add(packet);
+    }
+    
+    public void disconnect() {
+        writeQueue.clear();
+        writeQueue.add(disconnectSignal);
+    }
+    
+    public boolean isConnected() {
+        return isConnected;
     }
 
     @Override
+    @SuppressWarnings("StringEquality")
     protected Void doInBackground() throws Exception {
         try {
-            connect();
-            int c = 0;
-            while ( (c = System.in.read()) > -1 ) {
-                output.write(c);
+            connect(); // big blocker
+            while (output != null) {
+                String packet = writeQueue.take(); // big blocker
+                if (packet == disconnectSignal) {
+                    break;
+                }
+                output.write(packet.getBytes());
             }
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
+        } finally {
+            isConnected = false;
             port.close();
         }
         return null;
@@ -60,18 +75,13 @@ public class SerialPortWorker extends SwingWorker<Void, byte[]> {
     
     @Override
     protected void done() {
-        try {
-            get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(SerialPortWorker.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        
     }
         
     @Override
-    protected void process(java.util.List<byte[]> chunks) {
-        // TODO: pass messages out to external listeners
-        for (byte[] chunk : chunks) {
-            System.out.print(new String(chunk));
+    protected void process(java.util.List<String> chunks) {
+        for (String packet : chunks) {
+            firePropertyChange("gotPacket", null, packet);
         }
     }
 
@@ -89,9 +99,12 @@ public class SerialPortWorker extends SwingWorker<Void, byte[]> {
         verifyDevice();
 
         port.notifyOnDataAvailable(true);
-        port.notifyOnOutputEmpty(true);
         
         port.addEventListener((ev) -> serialEvent(ev));
+        
+        isConnected = true;
+        java.awt.EventQueue.invokeLater(() -> 
+            firePropertyChange("connected", null, null));
     }
     
     private static SerialPort openSerialPort(CommPortIdentifier portID) throws IOException {
@@ -124,23 +137,20 @@ public class SerialPortWorker extends SwingWorker<Void, byte[]> {
         String in = new String(buffer, 0, len);
 
         if(!in.equals(handshakeString)) {
-            System.err.println("Unexpected response "+in+" ("
-                    +Arrays.toString(in.getBytes())+")");
             throw new IOException("Hardware not found on this port.");
         }
     }
     
+    @SuppressWarnings({"PrimitiveArrayArgumentToVariableArgMethod"})
     private void serialEvent(SerialPortEvent ev) {
         int eventType = ev.getEventType();
         try {
-            if (eventType == SerialPortEvent.DATA_AVAILABLE) {
-                byte[] buffer = new byte[input.available()];
-                int len = input.read(buffer, 0, buffer.length);
-                publish(buffer);
-            } else if (eventType == SerialPortEvent.OUTPUT_BUFFER_EMPTY) {
-                if (!writeQueue.isEmpty()) {
-                    output.write(writeQueue.poll());
-                }
+            switch (eventType) {
+                case SerialPortEvent.DATA_AVAILABLE:
+                    byte[] buffer = new byte[input.available()];
+                    int len = input.read(buffer, 0, buffer.length);
+                    publish(new String(buffer, 0, len));
+                    break;
             }
         } catch (IOException ex) {
             Logger.getLogger(SerialService.class.getName()).log(Level.SEVERE, null, ex);

@@ -14,10 +14,43 @@ import java.util.ArrayList;
  */
 public class EditorService
 {
+    SerialService serialService;
     Frame frame;
     int theta;
     int y;
     ArrayList<Listener> listeners = new ArrayList<>();
+    
+    public EditorService(SerialService serialService) {
+        this.serialService = serialService;
+        addListener(new Listener() {
+            @Override
+            public void frameChanged() {
+                int i = booleansToInt(frame.data[0][0]);
+                String packet = ""+i+"\n";
+                serialService.writePacket(packet);
+            }
+            @Override
+            public void thetaChanged(int theta) {}
+            @Override
+            public void yChanged(int y) {}
+        });
+        serialService.addListener(new SerialService.Adapter() {
+            @Override
+            public void connectedToPort(String portName) {
+                int i = booleansToInt(frame.data[0][0]);
+                String packet = i+"\n";
+                serialService.writePacket(packet);
+                serialService.writePacket(packet); // first doesn't always take
+            }
+        });
+    }
+    
+    int booleansToInt(boolean[] arr) {
+        int n = 0;
+        for (boolean b : arr)
+            n = (n << 1) | (b ? 1 : 0);
+        return n;
+    }
     
     public void addListener(Listener listener) {
         listeners.add(listener);
