@@ -60,7 +60,7 @@ public class RectEditPanel extends JPanel
             }
 
             @Override
-            public void yChanged(int y) {} // I don't care!
+            public void yChanged(int y) { }
         });
     }
     
@@ -96,7 +96,7 @@ public class RectEditPanel extends JPanel
         try {
             screenToGridTransform = gridToScreenTransform.createInverse();
         } catch (NoninvertibleTransformException ex) {
-            // paint() will fail gracefully
+            // paintComponent() will fail gracefully
             gridToScreenTransform = null;
             screenToGridTransform = null;
         }
@@ -116,11 +116,11 @@ public class RectEditPanel extends JPanel
                         dragHandleY = y;
                     }
                 }
-                handleMousePoint(p);
+                handleMouseEvent(p);
             }
             @Override
             public void mouseReleased(MouseEvent e) {
-                handleMousePoint(e.getPoint());
+                handleMouseEvent(e.getPoint());
                 dragColor = null;
                 dragHandleY = null;
                 repaint();
@@ -129,12 +129,12 @@ public class RectEditPanel extends JPanel
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                handleMousePoint(e.getPoint());
+                handleMouseEvent(e.getPoint());
             }
         });
     }
     
-    private void handleMousePoint(Point p) {
+    private void handleMouseEvent(Point p) {
         if (dragColor != null) {
             Point cell = fromScreenToGrid(p);
             if (cell != null && dragColor != slice[cell.y][cell.x]) {
@@ -146,13 +146,17 @@ public class RectEditPanel extends JPanel
             Float y = fromScreenToHandleTrack(p);
             if (y != null) {
                 dragHandleY = y - 0.5f;
-                int yInt = (int)Math.floor(y);
-                editorService.setY(yInt);
+                editorService.setY(y.intValue());
                 repaint();
             }
         }
     }
     
+    /**
+     * Converts mouse point on screen to cell coordinate in slice.
+     * @param p mouse coordinate pair
+     * @return int-rounded (x, y) coordinate pair
+     */
     private Point fromScreenToGrid(Point p) {
         Point2D result = screenToGridTransform.transform(p, null);
         double x = result.getX();
@@ -163,19 +167,22 @@ public class RectEditPanel extends JPanel
         return null;
     }
     
+    /**
+     * Converts mouse point on screen to handle y.
+     * @param p mouse coordinate pair
+     * @return y position of handle [0, H)
+     */
     private Float fromScreenToHandleTrack(Point p) {
         Point2D result = screenToGridTransform.transform(p, null);
         double x = result.getX();
         double y = result.getY();
         if ((x >= R && y >= 0 && x <= R+1 && y < H) || dragHandleY != null) {
-            float yOut = (float)y;
-            if (yOut < 0) {
-                yOut = 0;
+            if (y < 0) {
+                return 0f;
+            } else if (y >= H) {
+                return Math.nextDown(H);
             }
-            if (yOut >= H) {
-                yOut = H-.001f;
-            }
-            return yOut;
+            return (float)y;
         }
         return null;
     }
@@ -184,7 +191,7 @@ public class RectEditPanel extends JPanel
     public void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
         if (gridToScreenTransform == null) {
-            return; // this happens at exit
+            return; // sometimes the transform is noninvertible
         }
         
         // clear background

@@ -88,7 +88,7 @@ public class CircleEditPanel extends JPanel
         try {
             screenToGridTransform = gridToScreenTransform.createInverse();
         } catch (NoninvertibleTransformException ex) {
-            // paint() will fail gracefully
+            // paintComponent() will fail gracefully
             gridToScreenTransform = null;
             screenToGridTransform = null;
         }
@@ -108,11 +108,11 @@ public class CircleEditPanel extends JPanel
                         dragHandleTheta = theta;
                     }
                 }
-                handleMousePoint(p);
+                handleMouseEvent(p);
             }
             @Override
             public void mouseReleased(MouseEvent e) {
-                handleMousePoint(e.getPoint());
+                handleMouseEvent(e.getPoint());
                 dragColor = null;
                 dragHandleTheta = null;
                 repaint();
@@ -121,12 +121,12 @@ public class CircleEditPanel extends JPanel
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                handleMousePoint(e.getPoint());
+                handleMouseEvent(e.getPoint());
             }
         });
     }
     
-    private void handleMousePoint(Point p) {
+    private void handleMouseEvent(Point p) {
         if (dragColor != null) {
             Point cell = fromScreenToGrid(p);
             if (cell != null && dragColor != slice[cell.y][cell.x]) {
@@ -138,13 +138,17 @@ public class CircleEditPanel extends JPanel
             Float y = fromScreenToHandleTrack(p);
             if (y != null) {
                 dragHandleTheta = y - 0.5f;
-                int yInt = (int)Math.floor(y);
-                editorService.setTheta(yInt);
+                editorService.setTheta(y.intValue());
                 repaint();
             }
         }
     }
     
+    /**
+     * Converts mouse point on screen to cell coordinate in slice.
+     * @param p mouse coordinate pair
+     * @return int-rounded (x, theta) coordinate pair
+     */
     private Point fromScreenToGrid(Point p) {
         Point2D result = screenToGridTransform.transform(p, null);
         double px = result.getX();
@@ -161,6 +165,11 @@ public class CircleEditPanel extends JPanel
         return null;
     }
     
+    /**
+     * Converts mouse point on screen to handle theta.
+     * @param p mouse coordinate pair
+     * @return theta of handle [0, C)
+     */
     private Float fromScreenToHandleTrack(Point p) {
         Point2D result = screenToGridTransform.transform(p, null);
         double px = result.getX();
@@ -172,6 +181,9 @@ public class CircleEditPanel extends JPanel
                 t += 2*Math.PI;
             }
             double theta = t * C / (2*Math.PI);
+            if (theta >= C) {
+                theta = Math.nextDown(C);
+            }
             return (float)theta;
         }
         return null;
@@ -181,7 +193,7 @@ public class CircleEditPanel extends JPanel
     public void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
         if (gridToScreenTransform == null) {
-            return; // this happens at exit
+            return; // sometimes the transform is noninvertible
         }
         
         // clear background
