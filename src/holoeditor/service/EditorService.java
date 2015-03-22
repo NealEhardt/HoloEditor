@@ -15,9 +15,9 @@ import java.util.ArrayList;
 public class EditorService
 {
     SerialService serialService;
-    Frame frame;
-    int theta;
-    int y;
+    private Frame frame;
+    private int theta;
+    private int y;
     ArrayList<Listener> listeners = new ArrayList<>();
     
     public EditorService(SerialService serialService) {

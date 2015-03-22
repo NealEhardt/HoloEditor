@@ -51,7 +51,12 @@ public class SerialService {
         
         // Get next portId
         if (portIds == null || portIds.isEmpty()) {
-            portIds = new ArrayDeque<>(Collections.list(CommPortIdentifier.getPortIdentifiers()));
+            try {
+                portIds = new ArrayDeque<>(Collections.list(CommPortIdentifier.getPortIdentifiers()));
+            } catch (UnsatisfiedLinkError e) {
+                System.err.println("Cannot find rxtxSerial binary.");
+                return;
+            }
         }
         CommPortIdentifier portId = (CommPortIdentifier)portIds.poll();
         String portName = portId.getName();

@@ -26,6 +26,7 @@ public class HoloEditor {
         /* If system look and feel is not available, stay with the default look and feel.
          */
         try {
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
             String systemLookAndFeel = UIManager.getSystemLookAndFeelClassName();
             for (javax.swing.UIManager.LookAndFeelInfo info
                     : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -43,8 +44,9 @@ public class HoloEditor {
         java.awt.EventQueue.invokeLater(() -> {
             serialService = new SerialService();
             editorService = new EditorService(serialService);
+            fileService = new FileService(editorService);
             editorService.setFrame(new holoeditor.model.Frame(32, 8, 8));
-            editorFrame = new EditorJFrame(editorService, serialService);
+            editorFrame = new EditorJFrame(editorService, serialService, fileService);
             editorFrame.setVisible(true);
             serialService.tryNextPort();
         });

@@ -7,6 +7,7 @@ package holoeditor.view;
 
 import holoeditor.service.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import javax.swing.*;
 
 /**
@@ -15,19 +16,25 @@ import javax.swing.*;
  */
 public class EditorJFrame extends javax.swing.JFrame
 {
+    EditorService editorService;
+    SerialService serialService;
+    FileService fileService;
+
     CircleEditPanel circlePanel;
     RectEditPanel rectPanel;
     
-    EditorService editorService;
-    SerialService serialService;
-
-    public EditorJFrame(EditorService editorService, SerialService serialService) {
+    public EditorJFrame(
+            EditorService editorService,
+            SerialService serialService,
+            FileService fileService) {
         super("HoloEditor"); // set frame title
         
         this.editorService = editorService;
         this.serialService = serialService;
+        this.fileService = fileService;
         
         initComponents();
+        initMenu();
         
         circlePanel = new CircleEditPanel(editorService);
         centerPanel.add(circlePanel);
@@ -48,6 +55,18 @@ public class EditorJFrame extends javax.swing.JFrame
         
         setSize(700, 400);
     }
+    
+    private void initMenu() {
+        int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, menuShortcutKeyMask));
+        saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKeyMask));
+        saveAsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                menuShortcutKeyMask | Event.SHIFT_MASK));
+        
+        openMenuItem.addActionListener((e) -> fileService.openFile(this));
+        saveMenuItem.addActionListener((e) -> fileService.saveFile(this));
+        saveAsMenuItem.addActionListener((e) -> fileService.saveFileAs(this));
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -62,10 +81,17 @@ public class EditorJFrame extends javax.swing.JFrame
         jPanel1 = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
         reconnectButton = new javax.swing.JButton();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        fileMenu = new javax.swing.JMenu();
+        openMenuItem = new javax.swing.JMenuItem();
+        saveMenuItem = new javax.swing.JMenuItem();
+        saveAsMenuItem = new javax.swing.JMenuItem();
+        editMenu = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        centerPanel.setLayout(new java.awt.GridLayout());
+        centerPanel.setLayout(new java.awt.GridLayout(1, 2));
         getContentPane().add(centerPanel, java.awt.BorderLayout.CENTER);
 
         jPanel1.setLayout(new java.awt.BorderLayout());
@@ -83,6 +109,28 @@ public class EditorJFrame extends javax.swing.JFrame
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.PAGE_END);
 
+        fileMenu.setText("File");
+
+        openMenuItem.setText("Open...");
+        fileMenu.add(openMenuItem);
+
+        saveMenuItem.setText("Save");
+        fileMenu.add(saveMenuItem);
+
+        saveAsMenuItem.setText("Save As...");
+        fileMenu.add(saveAsMenuItem);
+
+        jMenuBar1.add(fileMenu);
+
+        editMenu.setText("Edit");
+
+        jMenuItem1.setText("TODO");
+        editMenu.add(jMenuItem1);
+
+        jMenuBar1.add(editMenu);
+
+        setJMenuBar(jMenuBar1);
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -92,8 +140,15 @@ public class EditorJFrame extends javax.swing.JFrame
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel centerPanel;
+    private javax.swing.JMenu editMenu;
+    private javax.swing.JMenu fileMenu;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JMenuItem openMenuItem;
     private javax.swing.JButton reconnectButton;
+    private javax.swing.JMenuItem saveAsMenuItem;
+    private javax.swing.JMenuItem saveMenuItem;
     private javax.swing.JLabel statusLabel;
     // End of variables declaration//GEN-END:variables
 }
