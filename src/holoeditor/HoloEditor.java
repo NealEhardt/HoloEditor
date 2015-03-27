@@ -30,8 +30,9 @@ public class HoloEditor {
             String systemLookAndFeel = UIManager.getSystemLookAndFeelClassName();
             for (javax.swing.UIManager.LookAndFeelInfo info
                     : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if (systemLookAndFeel.equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                String className = info.getClassName();
+                if (systemLookAndFeel.equals(className)) {
+                    javax.swing.UIManager.setLookAndFeel(className);
                     break;
                 }
             }

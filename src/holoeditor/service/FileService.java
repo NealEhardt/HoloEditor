@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.function.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import javax.swing.JOptionPane;
 
 /**
  * Reads and writes .HOL files, presenting dialogs as needed.
@@ -35,10 +36,13 @@ public class FileService {
         File[] files = fd.getFiles();
         if (files.length > 0) {
             file = files[0];
-            System.out.println("You chose " + file);
             readFromFile((frame, ex) -> {
                 if (ex != null) {
-                    System.err.println("oh no "+ex);
+                    String msg = ex.getMessage()+" Cannot open file "
+                            +file.getAbsolutePath()+".";
+                    JOptionPane.showMessageDialog(parent, msg,
+                            "File read error "+file.getName(),
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 editorService.setFrame(frame);
@@ -47,15 +51,21 @@ public class FileService {
     }
     
     public void saveFile(java.awt.Frame parent) {
-        if (file == null || !file.canWrite()) {
+        if (file == null) {
             saveFileAs(parent);
             return;
         }
         writeToFile((ex) -> {
             if (ex != null) {
-                System.err.println("oh no "+ex);
-            } else {
-                System.out.println("File saved.");
+                String msg = ex.getMessage()+" Cannot write to file "
+                        +file.getAbsolutePath()+". Try again?";
+                int option = JOptionPane.showConfirmDialog(parent, msg,
+                        "File write error "+file.getName(),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.ERROR_MESSAGE);
+                if (option == JOptionPane.YES_OPTION) {
+                    saveFile(parent);
+                }
             }
         });
     }
@@ -68,7 +78,9 @@ public class FileService {
         File[] files = fd.getFiles();
         if (files.length > 0) {
             file = files[0];
-            System.out.println("You chose " + file);
+            if (!file.getName().endsWith(".hol")) {
+                file = new File(file.getAbsolutePath()+".hol");
+            }
             saveFile(parent);
         }
     }
