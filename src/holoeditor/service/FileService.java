@@ -6,6 +6,7 @@
 package holoeditor.service;
 
 import holoeditor.model.Frame;
+import java.awt.Component;
 import java.awt.FileDialog;
 import java.io.*;
 import java.util.function.*;
@@ -29,9 +30,8 @@ public class FileService {
         this.editorService = editorService;
     }
     
-    public void openFile(java.awt.Frame parent) {
-        FileDialog fd = new FileDialog(parent, "Open", FileDialog.LOAD);
-        fd.setFilenameFilter((dir, name) -> name.endsWith(".hol"));
+    public void openFile(Component parent) {
+        FileDialog fd = makeFileDialog(parent, "Open", FileDialog.LOAD);
         fd.setVisible(true);
         File[] files = fd.getFiles();
         if (files.length > 0) {
@@ -50,7 +50,7 @@ public class FileService {
         }
     }
     
-    public void saveFile(java.awt.Frame parent) {
+    public void saveFile(Component parent) {
         if (file == null) {
             saveFileAs(parent);
             return;
@@ -70,10 +70,9 @@ public class FileService {
         });
     }
     
-    public void saveFileAs(java.awt.Frame parent) {
-        FileDialog fd = new FileDialog(parent, "Save As", FileDialog.SAVE);
+    public void saveFileAs(Component parent) {
+        FileDialog fd = makeFileDialog(parent, "Save As", FileDialog.SAVE);
         fd.setFile("Untitled.hol");
-        fd.setFilenameFilter((dir, name) -> name.endsWith(".hol"));
         fd.setVisible(true);
         File[] files = fd.getFiles();
         if (files.length > 0) {
@@ -83,6 +82,14 @@ public class FileService {
             }
             saveFile(parent);
         }
+    }
+    
+    private FileDialog makeFileDialog(Component parent, String title, int mode) {
+        java.awt.Frame parentFrame
+                = (java.awt.Frame)javax.swing.SwingUtilities.getRoot(parent);
+        FileDialog fd = new FileDialog(parentFrame, title, mode);
+        fd.setFilenameFilter((dir, name) -> name.endsWith(".hol"));
+        return fd;
     }
     
     private void readFromFile(BiConsumer<Frame, Exception> callback) {
