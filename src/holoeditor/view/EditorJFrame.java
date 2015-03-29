@@ -6,12 +6,13 @@
 package holoeditor.view;
 
 import holoeditor.service.*;
+import javax.swing.JFrame;
 
 /**
  *
  * @author nehardt
  */
-public class EditorJFrame extends javax.swing.JFrame
+public class EditorJFrame extends JFrame
 {
     EditorService editorService;
     SerialService serialService;
@@ -32,7 +33,12 @@ public class EditorJFrame extends javax.swing.JFrame
         this.fileService = fileService;
         
         initComponents();
+        initMoreComponents();
         
+        setSize(700, 400);
+    }
+    
+    private void initMoreComponents() {
         menuBar = new EditorMenuBar(editorService, fileService);
         setJMenuBar(menuBar);
         
@@ -52,8 +58,6 @@ public class EditorJFrame extends javax.swing.JFrame
                 statusLabel.setText("Connected to port "+portName+".");
             }
         });
-        
-        setSize(700, 400);
     }
 
     /**

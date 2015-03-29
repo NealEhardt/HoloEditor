@@ -9,6 +9,7 @@ import holoeditor.service.*;
 import holoeditor.view.EditorJFrame;
 import javax.swing.UIManager;
 import java.util.logging.*;
+import javax.swing.JFrame;
 
 /**
  *
@@ -16,10 +17,7 @@ import java.util.logging.*;
  */
 public class HoloEditor {
 
-    static EditorJFrame editorFrame;
-    static EditorService editorService;
     static SerialService serialService;
-    static FileService fileService;
     
     public static void main(String[] args) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting ">
@@ -41,15 +39,19 @@ public class HoloEditor {
         }
         //</editor-fold>
         
-        /* Inversion of control (all instances made here) */
         java.awt.EventQueue.invokeLater(() -> {
             serialService = new SerialService();
-            editorService = new EditorService(serialService);
-            fileService = new FileService(editorService);
-            editorService.setFrame(new holoeditor.model.Frame(32, 8, 8));
-            editorFrame = new EditorJFrame(editorService, serialService, fileService);
-            editorFrame.setVisible(true);
+            makeNewWindow();
             serialService.tryNextPort();
         });
+    }
+    
+    public static void makeNewWindow() {
+        EditorService editorService = new EditorService(serialService);
+        FileService fileService = new FileService(editorService);
+        editorService.setFrame(new holoeditor.model.Frame(32, 8, 8));
+        EditorJFrame editorFrame = new EditorJFrame(editorService, serialService, fileService);
+        editorFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        editorFrame.setVisible(true);
     }
 }

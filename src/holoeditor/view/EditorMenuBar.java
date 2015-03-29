@@ -5,6 +5,7 @@
  */
 package holoeditor.view;
 
+import holoeditor.HoloEditor;
 import holoeditor.service.*;
 import java.awt.Event;
 import java.awt.Toolkit;
@@ -20,6 +21,7 @@ public class EditorMenuBar extends JMenuBar {
     FileService fileService;
     
     JMenu fileMenu;
+    JMenuItem newMenuItem;
     JMenuItem openMenuItem;
     JMenuItem saveMenuItem;
     JMenuItem saveAsMenuItem;
@@ -41,16 +43,19 @@ public class EditorMenuBar extends JMenuBar {
     
     private void initFileMenu() {
         fileMenu = new JMenu("File");
+        fileMenu.add(newMenuItem = new JMenuItem("New"));
         fileMenu.add(openMenuItem = new JMenuItem("Open..."));
         fileMenu.add(saveMenuItem = new JMenuItem("Save"));
         fileMenu.add(saveAsMenuItem = new JMenuItem("Save As..."));
         
         int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        newMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, menuShortcutKeyMask));
         openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, menuShortcutKeyMask));
         saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKeyMask));
         saveAsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
                 menuShortcutKeyMask | Event.SHIFT_MASK));
         
+        newMenuItem.addActionListener((e) -> HoloEditor.makeNewWindow());
         openMenuItem.addActionListener((e) -> fileService.openFile(this));
         saveMenuItem.addActionListener((e) -> fileService.saveFile(this));
         saveAsMenuItem.addActionListener((e) -> fileService.saveFileAs(this));
