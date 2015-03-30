@@ -5,7 +5,9 @@
  */
 package holoeditor.view;
 
+import holoeditor.model.Frame;
 import holoeditor.service.*;
+import java.io.File;
 import javax.swing.JFrame;
 
 /**

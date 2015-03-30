@@ -5,8 +5,10 @@
  */
 package holoeditor;
 
+import holoeditor.model.Frame;
 import holoeditor.service.*;
 import holoeditor.view.EditorJFrame;
+import java.io.File;
 import javax.swing.UIManager;
 import java.util.logging.*;
 import javax.swing.JFrame;
@@ -47,10 +49,26 @@ public class HoloEditor {
     }
     
     public static void makeNewWindow() {
+        makeNewWindow(null, null);
+    }
+    
+    public static void makeNewWindow(File file, Frame frame) {
         EditorService editorService = new EditorService(serialService);
+        if (frame == null) {
+            frame = new Frame(32, 8, 8);
+        }
+        editorService.setFrame(frame);
+        
         FileService fileService = new FileService(editorService);
-        editorService.setFrame(new holoeditor.model.Frame(32, 8, 8));
+        fileService.setFile(file);
+        
         EditorJFrame editorFrame = new EditorJFrame(editorService, serialService, fileService);
+        String title = "Untitled.hol";
+        if (file != null) {
+            title = file.getName();
+        }
+        editorFrame.setTitle(title);
+        
         editorFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         editorFrame.setVisible(true);
     }

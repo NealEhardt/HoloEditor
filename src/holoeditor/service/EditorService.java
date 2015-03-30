@@ -20,6 +20,12 @@ public class EditorService
     private int y;
     ArrayList<Listener> listeners = new ArrayList<>();
     
+    public interface Listener {
+        public void frameChanged();
+        public void thetaChanged(int theta);
+        public void yChanged(int y);
+    }
+    
     public EditorService(SerialService serialService) {
         this.serialService = serialService;
         addListener(new Listener() {
@@ -113,11 +119,5 @@ public class EditorService
         for (Listener l : listeners) {
             l.frameChanged();
         }
-    }
-    
-    public interface Listener {
-        public void frameChanged();
-        public void thetaChanged(int theta);
-        public void yChanged(int y);
     }
 }

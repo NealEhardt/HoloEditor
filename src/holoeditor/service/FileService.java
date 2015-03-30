@@ -5,10 +5,12 @@
  */
 package holoeditor.service;
 
+import holoeditor.HoloEditor;
 import holoeditor.model.Frame;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.function.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -24,10 +26,34 @@ import javax.swing.JOptionPane;
 public class FileService {
     EditorService editorService;
     File file;
+    Frame frame;
     final String introString = "HOL0.0.1";
+    ArrayList<Listener> listeners = new ArrayList<>();
     
     public FileService(EditorService editorService) {
         this.editorService = editorService;
+    }
+    
+    public interface Listener {
+        public void fileChanged(File file);
+        public void frameChanged(Frame frame);
+    }
+    public static class Adapter implements Listener {
+        @Override
+        public void fileChanged(File file) { }
+        @Override
+        public void frameChanged(Frame frame) { }
+    }
+    
+    public File getFile() { return file; }
+    public void setFile(File file) { this.file = file; }
+    public Frame getFrame() { return frame; }
+    
+    public void addListener(Listener listener) {
+        listeners.add(listener);
+    }
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
     
     public void openFile(Component parent) {
@@ -36,7 +62,7 @@ public class FileService {
         File[] files = fd.getFiles();
         if (files.length > 0) {
             file = files[0];
-            readFromFile((frame, ex) -> {
+            readFromFile((newFrame, ex) -> {
                 if (ex != null) {
                     String msg = ex.getMessage()+" Cannot open file "
                             +file.getAbsolutePath()+".";
@@ -45,7 +71,8 @@ public class FileService {
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                editorService.setFrame(frame);
+                frame = newFrame;
+                HoloEditor.makeNewWindow(file, frame);
             });
         }
     }
@@ -80,6 +107,9 @@ public class FileService {
             if (!file.getName().endsWith(".hol")) {
                 file = new File(file.getAbsolutePath()+".hol");
             }
+            for (Listener l : listeners) {
+                l.fileChanged(file);
+            }
             saveFile(parent);
         }
     }
@@ -92,7 +122,7 @@ public class FileService {
         return fd;
     }
     
-    private void readFromFile(BiConsumer<Frame, Exception> callback) {
+    public void readFromFile(BiConsumer<Frame, Exception> callback) {
         new Thread(() -> {
             try (
                 FileInputStream fis = new FileInputStream(file);
@@ -107,7 +137,7 @@ public class FileService {
         }).start();
     }
     
-    private void writeToFile(Consumer<Exception> callback) {
+    public void writeToFile(Consumer<Exception> callback) {
         new Thread(() -> {
             try (
                 FileOutputStream fos = new FileOutputStream(file);
