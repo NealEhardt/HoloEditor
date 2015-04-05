@@ -28,14 +28,19 @@ public class EditorJFrame extends JFrame
             EditorService editorService,
             SerialService serialService,
             FileService fileService) {
-        super("HoloEditor"); // set frame title
-        
         this.editorService = editorService;
         this.serialService = serialService;
         this.fileService = fileService;
         
         initComponents();
         initMoreComponents();
+        
+        fileService.addListener(new FileService.Adapter() {
+            @Override
+            public void fileChanged(File file) {
+                setTitle(file.getName());
+            }
+        });
         
         setSize(700, 400);
     }
