@@ -52,16 +52,7 @@ public class EditorService
     }
     
     private void writePacket() {
-        int i = booleansToInt(frame.data[theta][y]);
-        String packet = i+"\n";
-        serialService.writePacket(packet);
-    }
-    
-    int booleansToInt(boolean[] arr) {
-        int n = 0;
-        for (boolean b : arr)
-            n = (n << 1) | (b ? 1 : 0);
-        return n;
+        serialService.writePacket(frame.getPacket(theta));
     }
     
     public void addListener(Listener listener) {
@@ -85,6 +76,8 @@ public class EditorService
         return theta;
     }
     public void setTheta(int theta) {
+        if (this.theta == theta) { return; }
+        
         this.theta = theta;
         for (Listener l : listeners) {
             l.thetaChanged(theta);
@@ -95,6 +88,8 @@ public class EditorService
         return y;
     }
     public void setY(int y) {
+        if (this.y == y) { return; }
+        
         this.y = y;
         for (Listener l : listeners) {
             l.yChanged(y);

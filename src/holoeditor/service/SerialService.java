@@ -71,7 +71,7 @@ public class SerialService {
             switch (prop) {
                 case "gotPacket":
                     String packet = (String)evt.getNewValue();
-                    System.out.println(packet);
+                    System.out.print(">> " + packet);
                     break;
                 case "connected":
                     for (Listener l : listeners) {
@@ -89,6 +89,7 @@ public class SerialService {
     public void writePacket(String packet) {
         if (worker != null) {
             worker.writePacket(packet);
+            System.out.print("<< " + packet);
         }
     }
     

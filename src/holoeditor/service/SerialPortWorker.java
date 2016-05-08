@@ -13,9 +13,7 @@ import gnu.io.UnsupportedCommOperationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +30,8 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
 
     InputStream input;
     OutputStream output;
+    String partialPacket;
+    
     boolean isConnected;
     final String disconnectSignal = new String();
     
@@ -55,15 +55,16 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
     }
 
     @Override
-    @SuppressWarnings("StringEquality")
     protected Void doInBackground() throws Exception {
         try {
             connect(); // big blocker
             while (output != null) {
                 String packet = writeQueue.take(); // big blocker
-                if (packet == disconnectSignal) {
-                    break;
-                }
+                
+                @SuppressWarnings("StringEquality")
+                boolean isDone = packet == disconnectSignal;
+                if (isDone) { break; }
+                
                 output.write(packet.getBytes());
             }
         } finally {
@@ -77,10 +78,18 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
     protected void done() {
         
     }
-        
+    
     @Override
     protected void process(java.util.List<String> chunks) {
-        for (String packet : chunks) {
+        for (String chunk : chunks) {
+            partialPacket += chunk;
+        }
+        while (true) {
+            int idx = partialPacket.indexOf('\n');
+            if (idx == -1)
+                break;
+            String packet = partialPacket.substring(0, idx + 1);
+            partialPacket = partialPacket.substring(idx + 1);
             firePropertyChange("gotPacket", null, packet);
         }
     }
