@@ -52,7 +52,7 @@ public class EditorService
     }
     
     private void writePacket() {
-        serialService.writePacket(frame.getPacket(theta));
+        //serialService.writePacket(frame.getPacket(theta));
     }
     
     public void addListener(Listener listener) {

@@ -7,6 +7,8 @@ package holoeditor.view;
 
 import holoeditor.model.Frame;
 import holoeditor.service.*;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.io.File;
 import javax.swing.JFrame;
 
@@ -24,6 +26,9 @@ public class EditorJFrame extends JFrame
     CircleEditPanel circlePanel;
     RectEditPanel rectPanel;
     
+    javax.swing.Timer sliceTimer;
+    int sliceTheta = 0;
+    
     public EditorJFrame(
             EditorService editorService,
             SerialService serialService,
@@ -34,6 +39,7 @@ public class EditorJFrame extends JFrame
         
         initComponents();
         initMoreComponents();
+        initFocusListener();
         
         fileService.addListener(new FileService.Adapter() {
             @Override
@@ -63,6 +69,30 @@ public class EditorJFrame extends JFrame
             @Override
             public void connectedToPort(String portName) {
                 statusLabel.setText("Connected to port "+portName+".");
+            }
+        });
+        String portName = serialService.getPortName();
+        if (portName != null) {
+            statusLabel.setText("Connected to port "+portName+".");
+        }
+    }
+    
+    private void initFocusListener() {
+        addWindowFocusListener(new WindowFocusListener() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                sliceTimer = new javax.swing.Timer(10, (ae) ->  {
+                    Frame frame = editorService.getFrame();
+                    if (sliceTheta >= frame.circumference) { sliceTheta = 0; }
+                    serialService.writePacket(frame.getPacket(sliceTheta));
+                    sliceTheta++;
+                });
+                sliceTimer.setRepeats(true);
+                sliceTimer.start();
+            }
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+                sliceTimer.stop();
             }
         });
     }

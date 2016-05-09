@@ -24,6 +24,7 @@ import javax.swing.SwingWorker;
  * @author Neal
  */
 public class SerialPortWorker extends SwingWorker<Void, String> {
+    final static int BAUD_RATE = 115200;
     
     public final CommPortIdentifier portId;
     SerialPort port;
@@ -124,7 +125,7 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
             throw new IOException("Serial port is already in use.");
         }
         try {
-            serialPort.setSerialPortParams(9600, SerialPort.DATABITS_8,
+            serialPort.setSerialPortParams(BAUD_RATE, SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
         } catch (UnsupportedCommOperationException ex) {
             throw new IOException("Couldn't set serial port params.");

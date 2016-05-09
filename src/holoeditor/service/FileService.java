@@ -133,7 +133,7 @@ public class FileService {
             } catch (IOException ex) {
                 java.awt.EventQueue.invokeLater(() -> callback.accept(null, ex));
             }
-        }).start();
+        }, "File reader").start();
     }
     
     public void writeToFile(Consumer<Exception> callback) {
