@@ -56,7 +56,7 @@ public class EditorMenuBar extends JMenuBar {
                 menuShortcutKeyMask | Event.SHIFT_MASK));
         
         newMenuItem.addActionListener((e) -> HoloEditor.makeNewWindow());
-        openMenuItem.addActionListener((e) -> fileService.openFile(this));
+        openMenuItem.addActionListener((e) -> FileService.openFile(this));
         saveMenuItem.addActionListener((e) -> fileService.saveFile(this));
         saveAsMenuItem.addActionListener((e) -> fileService.saveFileAs(this));
     }

@@ -27,7 +27,7 @@ public class FileService {
     EditorService editorService;
     File file;
     Frame frame;
-    final String introString = "HOL0.0.1";
+    final static String introString = "HOL0.0.1";
     ArrayList<Listener> listeners = new ArrayList<>();
     
     public FileService(EditorService editorService) {
@@ -56,23 +56,22 @@ public class FileService {
         listeners.remove(listener);
     }
     
-    public void openFile(Component parent) {
+    public static void openFile(Component parent) {
         FileDialog fd = makeFileDialog(parent, "Open", FileDialog.LOAD);
         fd.setVisible(true);
         File[] files = fd.getFiles();
         if (files.length > 0) {
-            file = files[0];
-            readFromFile((newFrame, ex) -> {
+            File f = files[0];
+            readFromFile(f, (newFrame, ex) -> {
                 if (ex != null) {
                     String msg = ex.getMessage()+" Cannot open file "
-                            +file.getAbsolutePath()+".";
+                            +f.getAbsolutePath()+".";
                     JOptionPane.showMessageDialog(parent, msg,
-                            "File read error "+file.getName(),
+                            "File read error "+f.getName(),
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                frame = newFrame;
-                HoloEditor.makeNewWindow(file, frame);
+                HoloEditor.makeNewWindow(f, newFrame);
             });
         }
     }
@@ -114,7 +113,7 @@ public class FileService {
         }
     }
     
-    private FileDialog makeFileDialog(Component parent, String title, int mode) {
+    private static FileDialog makeFileDialog(Component parent, String title, int mode) {
         java.awt.Frame parentFrame
                 = (java.awt.Frame)javax.swing.SwingUtilities.getRoot(parent);
         FileDialog fd = new FileDialog(parentFrame, title, mode);
@@ -122,7 +121,7 @@ public class FileService {
         return fd;
     }
     
-    public void readFromFile(BiConsumer<Frame, Exception> callback) {
+    public static void readFromFile(File file, BiConsumer<Frame, Exception> callback) {
         new Thread(() -> {
             try (
                 FileInputStream fis = new FileInputStream(file);
@@ -157,7 +156,7 @@ public class FileService {
         oos.writeObject(editorService.getFrame());
     }
     
-    private Frame readObjects(ObjectInputStream ois) throws IOException {
+    private static Frame readObjects(ObjectInputStream ois) throws IOException {
         try {
             Object first = ois.readObject();
             if (!introString.equals(first)) {
