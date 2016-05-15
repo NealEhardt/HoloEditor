@@ -14,7 +14,8 @@ import java.util.ArrayList;
  */
 public class EditorService
 {
-    SerialService serialService;
+    final DisplayService displayService;
+    
     private Frame frame;
     private int theta;
     private int y;
@@ -26,33 +27,8 @@ public class EditorService
         public void yChanged(int y);
     }
     
-    public EditorService(SerialService serialService) {
-        this.serialService = serialService;
-        addListener(new Listener() {
-            @Override
-            public void frameChanged() {
-                writePacket();
-            }
-            @Override
-            public void thetaChanged(int theta) {
-                writePacket();
-            }
-            @Override
-            public void yChanged(int y) {
-                writePacket();
-            }
-        });
-        serialService.addListener(new SerialService.Adapter() {
-            @Override
-            public void connectedToPort(String portName) {
-                writePacket();
-                writePacket(); // first doesn't always take
-            }
-        });
-    }
-    
-    private void writePacket() {
-        //serialService.writePacket(frame.getPacket(theta));
+    public EditorService(DisplayService displayService) {
+        this.displayService = displayService;
     }
     
     public void addListener(Listener listener) {

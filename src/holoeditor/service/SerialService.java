@@ -92,10 +92,9 @@ public class SerialService {
         worker.execute();
     }
     
-    public void writePacket(String packet) {
+    public void writePacket(byte[] packet) {
         if (worker != null && worker.isConnected()) {
             worker.writePacket(packet);
-            System.out.print("<< " + packet);
         }
     }
     

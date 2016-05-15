@@ -20,21 +20,21 @@ public class EditorJFrame extends JFrame
 {
     EditorService editorService;
     SerialService serialService;
+    DisplayService displayService;
     FileService fileService;
 
     EditorMenuBar menuBar;
     CircleEditPanel circlePanel;
     RectEditPanel rectPanel;
     
-    javax.swing.Timer sliceTimer;
-    int sliceTheta = 0;
-    
     public EditorJFrame(
             EditorService editorService,
             SerialService serialService,
+            DisplayService displayService,
             FileService fileService) {
         this.editorService = editorService;
         this.serialService = serialService;
+        this.displayService = displayService;
         this.fileService = fileService;
         
         initComponents();
@@ -81,19 +81,10 @@ public class EditorJFrame extends JFrame
         addWindowFocusListener(new WindowFocusListener() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
-                sliceTimer = new javax.swing.Timer(10, (ae) ->  {
-                    Frame frame = editorService.getFrame();
-                    if (sliceTheta >= frame.circumference) { sliceTheta = 0; }
-                    serialService.writePacket(frame.getPacket(sliceTheta));
-                    sliceTheta++;
-                });
-                sliceTimer.setRepeats(true);
-                sliceTimer.start();
+                displayService.setFrame(editorService.getFrame());
             }
             @Override
-            public void windowLostFocus(WindowEvent e) {
-                sliceTimer.stop();
-            }
+            public void windowLostFocus(WindowEvent e) { }
         });
     }
 

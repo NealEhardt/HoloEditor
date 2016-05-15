@@ -81,30 +81,33 @@ public class Frame implements Serializable
         }
     }
     
-    public String getPacket(int theta) {
-        String packet = "";
+    public byte[] getPacket(int theta) {
+        byte[] packet = new byte[radius * 2];
+        int i = 0;
         
         // near slice
         for (int x = radius-1; x >= 0; x--) {
-            int column = 0;
+            byte column = 0;
             for (int y = 0; y < height; y++) {
                 boolean b = data[theta][y][x];
-                column = (column << 1) | (b ? 1 : 0);
+                column <<= 1;
+                column |= (b ? 1 : 0);
             }
-            packet += Integer.toString(column) + ",";
+            packet[i++] = column;
         }
         
         // far slice
         int farTheta = (theta + circumference/2) % circumference;
         for (int x = 0; x < radius; x++) {
-            int column = 0;
+            byte column = 0;
             for (int y = 0; y < height; y++) {
                 boolean b = data[farTheta][y][x];
-                column = (column << 1) | (b ? 1 : 0);
+                column <<= 1;
+                column |= (b ? 1 : 0);
             }
-            packet += Integer.toString(column) + ",";
+            packet[i++] = column;
         }
         
-        return packet + "\n";
+        return packet;
     }
 }

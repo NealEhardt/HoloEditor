@@ -34,15 +34,15 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
     String partialPacket;
     
     boolean isConnected;
-    final String disconnectSignal = new String();
+    final byte[] disconnectSignal = new byte[0];
     
-    final BlockingQueue<String> writeQueue = new LinkedBlockingQueue<>();
+    final BlockingQueue<byte[]> writeQueue = new LinkedBlockingQueue<>();
     
     public SerialPortWorker(CommPortIdentifier portId) {
         this.portId = portId;
     }
     
-    public void writePacket(String packet) {
+    public void writePacket(byte[] packet) {
         writeQueue.add(packet);
     }
     
@@ -60,13 +60,13 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
         try {
             connect(); // big blocker
             while (output != null) {
-                String packet = writeQueue.take(); // big blocker
+                byte[] packet = writeQueue.take(); // big blocker
                 
                 @SuppressWarnings("StringEquality")
                 boolean isDone = packet == disconnectSignal;
                 if (isDone) { break; }
                 
-                output.write(packet.getBytes());
+                output.write(packet);
             }
         } finally {
             isConnected = false;

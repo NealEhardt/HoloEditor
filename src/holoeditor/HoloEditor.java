@@ -8,6 +8,8 @@ package holoeditor;
 import holoeditor.model.Frame;
 import holoeditor.service.*;
 import holoeditor.view.EditorJFrame;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowAdapter;
 import java.io.File;
 import javax.swing.UIManager;
 import java.util.logging.*;
@@ -20,6 +22,9 @@ import javax.swing.JFrame;
 public class HoloEditor {
 
     static SerialService serialService;
+    static DisplayService displayService;
+    
+    static int windowCount = 0;
     
     public static void main(String[] args) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting ">
@@ -43,6 +48,7 @@ public class HoloEditor {
         
         java.awt.EventQueue.invokeLater(() -> {
             serialService = new SerialService();
+            displayService = new DisplayService(serialService);
             makeNewWindow();
             serialService.tryNextPort();
         });
@@ -53,7 +59,7 @@ public class HoloEditor {
     }
     
     public static void makeNewWindow(File file, Frame frame) {
-        EditorService editorService = new EditorService(serialService);
+        EditorService editorService = new EditorService(displayService);
         if (frame == null) {
             frame = new Frame(32, 8, 8);
         }
@@ -62,12 +68,28 @@ public class HoloEditor {
         FileService fileService = new FileService(editorService);
         fileService.setFile(file);
         
-        EditorJFrame editorFrame = new EditorJFrame(editorService, serialService, fileService);
+        EditorJFrame editorFrame = new EditorJFrame(editorService,
+                serialService, displayService, fileService);
         String title = "Untitled.hol";
         if (file != null) {
             title = file.getName();
         }
         editorFrame.setTitle(title);
+        
+        editorFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                windowCount++;
+            }
+            
+            @Override
+            public void windowClosed(WindowEvent e) {
+                windowCount--;
+                if (windowCount == 0) {
+                    System.exit(0);
+                }
+            }
+        });
         
         editorFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         editorFrame.setVisible(true);
