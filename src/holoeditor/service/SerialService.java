@@ -6,7 +6,6 @@
 package holoeditor.service;
 
 import gnu.io.CommPortIdentifier;
-import holoeditor.model.Frame;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.ArrayDeque;
@@ -77,7 +76,10 @@ public class SerialService {
             switch (prop) {
                 case "gotPacket":
                     String packet = (String)evt.getNewValue();
-                    System.out.print(">> " + packet);
+                    for (Listener l : listeners) {
+                        l.recievedPacket(packet);
+                    }
+                    System.out.println(">> " + packet);
                     break;
                 case "connected":
                     for (Listener l : listeners) {
@@ -102,7 +104,7 @@ public class SerialService {
         void scanningPort(String portName);
         void connectedToPort(String portName);
         void disconnectedFromPort(String portName);
-        void recievedPacket(byte[] packet);
+        void recievedPacket(String packet);
     }
     
     public static class Adapter implements Listener {
@@ -113,6 +115,6 @@ public class SerialService {
         @Override
         public void disconnectedFromPort(String portName) { }
         @Override
-        public void recievedPacket(byte[] packet) { }
+        public void recievedPacket(String packet) { }
     }
 }

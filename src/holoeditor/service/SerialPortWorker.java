@@ -13,25 +13,35 @@ import gnu.io.UnsupportedCommOperationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import javax.swing.SwingWorker;
 
 /**
- *
+ * Attempts to connect to a serial port ID and pipe data. Call writePacket
+ * to send data. Use addPropertyChangeListener for "connected", "gotPacket",
+ * and disconnect events.
+ * 
+ * Eventually, the connection will fail and this worker will die.
+ * See SwingWorker docs for more info about its lifecycle.
+ * 
  * @author Neal
  */
 public class SerialPortWorker extends SwingWorker<Void, String> {
     final static int BAUD_RATE = 115200;
     
+    static int staticSessionId;
+    int sessionId = (staticSessionId++);
     public final CommPortIdentifier portId;
     SerialPort port;
 
     InputStream input;
     OutputStream output;
-    String partialPacket;
+    String partialPacket = "";
     
     boolean isConnected;
     final byte[] disconnectSignal = new byte[0];
@@ -59,6 +69,8 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
     protected Void doInBackground() throws Exception {
         try {
             connect(); // big blocker
+            Thread.sleep(500);
+            writeQueue.clear();
             while (output != null) {
                 byte[] packet = writeQueue.take(); // big blocker
                 
@@ -86,11 +98,11 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
             partialPacket += chunk;
         }
         while (true) {
-            int idx = partialPacket.indexOf('\n');
+            int idx = partialPacket.indexOf("\r\n");
             if (idx == -1)
                 break;
-            String packet = partialPacket.substring(0, idx + 1);
-            partialPacket = partialPacket.substring(idx + 1);
+            String packet = partialPacket.substring(0      , idx);
+            partialPacket = partialPacket.substring(idx + 2);
             firePropertyChange("gotPacket", null, packet);
         }
     }
@@ -147,6 +159,7 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
         String in = new String(buffer, 0, len);
 
         if(!in.equals(handshakeString)) {
+            System.err.println("illegal "+in);
             throw new IOException("Hardware not found on this port.");
         }
     }
@@ -163,7 +176,14 @@ public class SerialPortWorker extends SwingWorker<Void, String> {
                     break;
             }
         } catch (IOException ex) {
-            Logger.getLogger(SerialService.class.getName()).log(Level.SEVERE, null, ex);
+            disconnect();
         }
+    }
+    
+    @Override
+    public String toString() {
+        return SerialPortWorker.class.getSimpleName()
+                + ":" + portId.getName()
+                + ":" + sessionId;
     }
 }
