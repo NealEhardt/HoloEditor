@@ -14,6 +14,8 @@ import java.util.ArrayList;
  */
 public class EditorService
 {
+    public static final float HandleSize = Frame.Radius * .1f;
+    
     final DisplayService displayService;
     
     private Frame frame;
@@ -72,23 +74,24 @@ public class EditorService
         }
     }
     
-    public boolean[][] getRadialSlice() {
-        return frame.getRadialSlice(theta);
-    }
-    public void setRadialSlice(boolean[][] slice) {
-        frame.setRadialSlice(theta, slice);
-        for (Listener l : listeners) {
-            l.frameChanged();
-        }
-    }
-    
     public boolean[][] getCircularSlice() {
         return frame.getCircularSlice(y);
     }
-    public void setCircularSlice(boolean[][] slice) {
-        frame.setCircularSlice(y, slice);
-        for (Listener l : listeners) {
-            l.frameChanged();
+    public void setVoxel(PointTYR point, boolean value) {
+        this.setVoxel((int)point.t, (int)point.y, (int)point.r, value);
+    }
+    public void setVoxel(int t, int y, int r, boolean value) {
+        if (r < 0) {
+            r *= -1;
+            t += Frame.Circumference / 2;
+        }
+        t = Math.floorMod(t, Frame.Circumference);
+        if (y >= 0 && y < Frame.Height
+                && r < Frame.Radius) {
+            frame.setVoxel(Math.floorMod(t, Frame.Circumference), y, r, value);
+            for (Listener l : listeners) {
+                l.frameChanged();
+            }
         }
     }
 }

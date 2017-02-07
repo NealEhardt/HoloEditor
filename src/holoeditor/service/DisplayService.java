@@ -30,10 +30,10 @@ public class DisplayService {
             public void connectedToPort(String portName) {
                 thread = new Thread(() ->  {
                     while(thread == Thread.currentThread()) {
-                        serialService.writePacket(frame.getPacket(sliceTheta % frame.circumference));
+                        serialService.writePacket(frame.getPacket(sliceTheta % Frame.Circumference));
                         sliceTheta++;
                         
-                        long nextSliceTime = lastTick + period * sliceTheta / frame.circumference;
+                        long nextSliceTime = lastTick + period * sliceTheta / Frame.Circumference;
                         long sleepTime = nextSliceTime - System.nanoTime();
                         if (sleepTime > 0) {
                             try {

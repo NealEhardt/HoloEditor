@@ -13,58 +13,37 @@ import java.io.Serializable;
  */
 public class Frame implements Serializable
 {
-    private static final long serialVersionUID = -4450362694815086992L;
+    private static final long serialVersionUID = 2L;
     
-    public final int circumference, height, radius;
+    public static final int Circumference = 128, Height = 24, Radius = 16;
     
-    /** theta [0, circumference) * y [0, height) * x [0, radius) */
-    public final boolean[][][] data;
+    public static final int[] DivisionsByR = new int[Radius];
+    static {
+        int divisions = Circumference;
+        for (int r = Radius-1; r >= 0; r--) {
+            while (4*Math.PI*(r+.5) <= divisions) {
+                divisions /= 2;
+            }
+            DivisionsByR[r] = divisions;
+        }
+    }
+    
+    /** theta [0, circumference) * y [0, height) * r [0, radius) */
+    public final boolean[][][] data = new boolean[Circumference][Height][Radius];
     
     /**
      * Creates a blank frame.
-     * @param circumference
-     * @param height
-     * @param radius 
      */
-    public Frame(int circumference, int height, int radius) {
-        this.circumference = circumference;
-        this.height = height;
-        this.radius = radius;
-        data = new boolean[circumference][height][radius];
-    }
-    
-    /**
-     * 
-     * @param theta [0, circumference)
-     * @return y [0, height) * x [0, radius)
-     */
-    public boolean[][] getRadialSlice(int theta) {
-        boolean[][] slice = new boolean[height][radius];
-        for (int i = 0; i < height; i++) {
-            slice[i] = data[theta][i].clone();
-        }
-        return slice;
-    }
-    
-    /**
-     * 
-     * @param theta [0, circumference)
-     * @param slice y [0, height) * x [0, radius)
-     */
-    public void setRadialSlice(int theta, boolean[][] slice) {
-        for (int i = 0; i < height; i++) {
-            data[theta][i] = slice[i].clone();
-        }
-    }
+    public Frame() { }
     
     /**
      * 
      * @param y [0, height)
-     * @return theta [0, circumference) * x [0, radius)
+     * @return theta [0, circumference) * r [0, radius)
      */
     public boolean[][] getCircularSlice(int y) {
-        boolean[][] slice = new boolean[circumference][];
-        for (int theta = 0; theta < circumference; theta++) {
+        boolean[][] slice = new boolean[Circumference][];
+        for (int theta = 0; theta < Circumference; theta++) {
             slice[theta] = data[theta][y].clone();
         }
         return slice;
@@ -72,24 +51,40 @@ public class Frame implements Serializable
     
     /**
      * 
+     * @param t [0, circumference)
      * @param y [0, height)
-     * @param slice theta [0, circumference) * x [0, radius)
+     * @param r [0, radius)
+     * @param color
      */
-    public void setCircularSlice(int y, boolean[][] slice) {
-        for (int theta = 0; theta < circumference; theta++) {
-            data[theta][y] = slice[theta].clone();
+    public void setVoxel(int t, int y, int r, boolean color) {
+        data[t][y][r] = color;
+    }
+    
+    public void setVoxel(PointTYR point, boolean color) {
+        setVoxel((int)point.t, (int)point.y, (int)point.r, color);
+    }
+    
+    public boolean getVoxel(PointTYR point) {
+        return getVoxel((int)point.t, (int)point.y, (int)point.r);
+    }
+    public boolean getVoxel(int t, int y, int r) {
+        if (r < 0) {
+            r *= -1;
+            t += Circumference / 2;
         }
+        t = Math.floorMod(t, Circumference);
+        return data[t][y][r];
     }
     
     public byte[] getPacket(int theta) {
-        byte[] packet = new byte[radius * 2];
+        byte[] packet = new byte[Radius * 2];
         int i = 0;
         
         // near slice
-        for (int x = radius-1; x >= 0; x--) {
+        for (int r = Radius-1; r >= 0; r--) {
             byte column = 0;
-            for (int y = 0; y < height; y++) {
-                boolean b = data[theta][y][x];
+            for (int y = 0; y < Height; y++) {
+                boolean b = data[theta][y][r];
                 column <<= 1;
                 column |= (b ? 1 : 0);
             }
@@ -97,11 +92,11 @@ public class Frame implements Serializable
         }
         
         // far slice
-        int farTheta = (theta + circumference/2) % circumference;
-        for (int x = 0; x < radius; x++) {
+        int farTheta = (theta + Circumference/2) % Circumference;
+        for (int r = 0; r < Radius; r++) {
             byte column = 0;
-            for (int y = 0; y < height; y++) {
-                boolean b = data[farTheta][y][x];
+            for (int y = 0; y < Height; y++) {
+                boolean b = data[farTheta][y][r];
                 column <<= 1;
                 column |= (b ? 1 : 0);
             }

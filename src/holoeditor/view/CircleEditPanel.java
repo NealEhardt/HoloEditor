@@ -5,8 +5,13 @@
  */
 package holoeditor.view;
 
+import holoeditor.model.Frame;
+import holoeditor.model.PointTYR;
 import holoeditor.service.EditorService;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.*;
 import java.awt.geom.*;
 import javax.swing.*;
@@ -20,22 +25,24 @@ public class CircleEditPanel extends JPanel
     final int C, R;
     boolean[][] slice;
     int y;
+    Frame frame;
     EditorService editorService;
     
-    final float padRatio = 0.1f;
+    final float padRatio = 0.05f;
     
      // grid coords go from (-R, -R) to (+R, +R)
     AffineTransform gridToScreenTransform;
     AffineTransform screenToGridTransform;
     
-    Boolean dragColor = null;
-    Float dragHandleTheta = null;
+    Brush brush = null;
+    Double dragHandleTheta = null;
     
     public CircleEditPanel(EditorService editorService) {
         this.editorService = editorService;
-        C = editorService.getFrame().circumference;
-        R = editorService.getFrame().radius;
+        C = holoeditor.model.Frame.Circumference;
+        R = holoeditor.model.Frame.Radius;
         slice = editorService.getCircularSlice();
+        frame = editorService.getFrame();
         
         wireServiceEvents();
         wireComponentEvents();
@@ -46,10 +53,8 @@ public class CircleEditPanel extends JPanel
         editorService.addListener(new EditorService.Listener() {
             @Override
             public void frameChanged() {
-                if (dragColor == null) {
-                    slice = editorService.getCircularSlice();
-                    repaint();
-                }
+                slice = editorService.getCircularSlice();
+                repaint();
             }
 
             @Override
@@ -76,10 +81,10 @@ public class CircleEditPanel extends JPanel
     private void updateTransforms() {
         float panelWidth = getWidth() * (1 - padRatio*2);
         float panelHeight = getHeight() * (1 - padRatio*2);
-        // Use +2 to accommodate slider around border.
+        float gridR = 2*(R + EditorService.HandleSize);
         float scale = panelHeight < panelWidth
-            ? (panelHeight / (2*R + 2))
-            : (panelWidth / (2*R + 2));
+            ? panelHeight / gridR
+            : panelWidth / gridR;
         
         float gridOffX = getWidth() / 2;
         float gridOffY = getHeight() / 2;
@@ -95,25 +100,32 @@ public class CircleEditPanel extends JPanel
     }
     
     private void wireMouseEvents() {
+        brush = new Brush(new Brush.Delegate () {
+            @Override
+            public void setVoxel(PointTYR point, boolean color) {
+                editorService.setVoxel(point, color);
+            }
+        });
+        
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                Point p = e.getPoint();
-                Point cell = fromScreenToGrid(p);
-                if (cell != null) {
-                    dragColor = !slice[cell.y][cell.x];
+                PointTYR p = fromScreenToGrid(e.getPoint());
+                if (p.r < R) {
+                    brush.setColor(!frame.getVoxel(p));
+                    brush.begin(p);
                 } else {
-                    Float theta = fromScreenToHandleTrack(p);
-                    if (theta != null) {
-                        dragHandleTheta = theta;
-                    }
+                    dragHandleTheta = p.t;
+                    editorService.setTheta(dragHandleTheta.intValue());
+                    repaint();
                 }
-                handleMouseEvent(p);
             }
             @Override
             public void mouseReleased(MouseEvent e) {
-                handleMouseEvent(e.getPoint());
-                dragColor = null;
+                PointTYR p = fromScreenToGrid(e.getPoint());
+                if (brush.isPainting()) {
+                    brush.end(p);
+                }
                 dragHandleTheta = null;
                 repaint();
             }
@@ -121,72 +133,36 @@ public class CircleEditPanel extends JPanel
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                handleMouseEvent(e.getPoint());
+                PointTYR p = fromScreenToGrid(e.getPoint());
+                
+                if (brush.isPainting()) {
+                    brush.move(p);
+                }
+                if (dragHandleTheta != null) {
+                    dragHandleTheta = p.t;
+                    editorService.setTheta(dragHandleTheta.intValue());
+                    repaint();
+                }
             }
         });
-    }
-    
-    private void handleMouseEvent(Point p) {
-        if (dragColor != null) {
-            Point cell = fromScreenToGrid(p);
-            if (cell != null && dragColor != slice[cell.y][cell.x]) {
-                slice[cell.y][cell.x] = dragColor;
-                editorService.setCircularSlice(slice);
-                repaint();
-            }
-        } else if (dragHandleTheta != null) {
-            Float y = fromScreenToHandleTrack(p);
-            if (y != null) {
-                dragHandleTheta = y - 0.5f;
-                editorService.setTheta(y.intValue());
-                repaint();
-            }
-        }
     }
     
     /**
      * Converts mouse point on screen to cell coordinate in slice.
      * @param p mouse coordinate pair
-     * @return int-rounded (x, theta) coordinate pair
+     * @return
      */
-    private Point fromScreenToGrid(Point p) {
+    private PointTYR fromScreenToGrid(Point p) {
         Point2D result = screenToGridTransform.transform(p, null);
         double px = result.getX();
         double py = result.getY();
-        double x = Math.sqrt(px*px + py*py);
-        if (x < R) {
-            double t = Math.atan2(py, px);
-            if (t < 0) {
-                t += 2*Math.PI;
-            }
-            double theta = t * C / (2*Math.PI);
-            return new Point((int)x, (int)theta);
+        double r = Math.sqrt(px*px + py*py);
+        double angle = Math.atan2(py, px);
+        if (angle < 0) {
+            angle += 2*Math.PI;
         }
-        return null;
-    }
-    
-    /**
-     * Converts mouse point on screen to handle theta.
-     * @param p mouse coordinate pair
-     * @return theta of handle [0, C)
-     */
-    private Float fromScreenToHandleTrack(Point p) {
-        Point2D result = screenToGridTransform.transform(p, null);
-        double px = result.getX();
-        double py = result.getY();
-        double x = Math.sqrt(px*px + py*py);
-        if ((x >= R && x < R+1) || dragHandleTheta != null) {
-            double t = Math.atan2(py, px);
-            if (t < 0) {
-                t += 2*Math.PI;
-            }
-            double theta = t * C / (2*Math.PI);
-            if (theta >= C) {
-                theta = Math.nextDown(C);
-            }
-            return (float)theta;
-        }
-        return null;
+        double t = angle * C / (2*Math.PI);
+        return new PointTYR(t, y, r);
     }
     
     @Override
@@ -209,10 +185,10 @@ public class CircleEditPanel extends JPanel
         // fill cells
         Arc2D arc = new Arc2D.Float(); // angles are 0-360 CW
         double angleExtent = 360.0 / C;
-        for (int x = R-1; x >= 0; x--) {
-            arc.setArcByCenter(0, 0, x+1, 0, angleExtent, Arc2D.PIE);
+        for (int r = R-1; r >= 0; r--) {
+            arc.setArcByCenter(0, 0, r+1, 0, angleExtent, Arc2D.PIE);
             for (int theta = 0; theta < C; theta++) {
-                g.setColor(slice[theta][x] ? Color.white : Color.black);
+                g.setColor(slice[theta][r] ? Color.white : Color.black);
                 arc.setAngleStart((-theta - 1) * angleExtent);
                 g.fill(gridToScreenTransform.createTransformedShape(arc));
             }
@@ -221,18 +197,23 @@ public class CircleEditPanel extends JPanel
         // radial lines
         g.setColor(Color.lightGray);
         Line2D line = new Line2D.Float();
-        for (int theta = 0; theta < C/2; theta++) {
+        for (int theta = 0; theta < C; theta++) {
             double t = theta * 2*Math.PI / C;
-            double x = R * Math.cos(t);
-            double y = R * Math.sin(t);
-            line.setLine(-x, -y, x, y);
+            
+            int r = 0;
+            while (theta % (C / holoeditor.model.Frame.DivisionsByR[r]) != 0) {
+                r++;
+            }
+            double xUnit = Math.cos(t);
+            double yUnit = Math.sin(t);
+            line.setLine(r*xUnit, r*yUnit, R*xUnit, R*yUnit);
             g.draw(gridToScreenTransform.createTransformedShape(line));
         }
         
         // concentric circles
         Ellipse2D ellipse = new Ellipse2D.Float();
-        for (int x = 1; x <= R; x++) {
-            ellipse.setFrame(-x, -x, x*2, x*2);
+        for (int r = 1; r <= R; r++) {
+            ellipse.setFrame(-r, -r, r*2, r*2);
             g.draw(gridToScreenTransform.createTransformedShape(ellipse));
         }
     }
@@ -243,13 +224,16 @@ public class CircleEditPanel extends JPanel
         p.lineTo(1, -.5);
         p.lineTo(1, .5);
         p.closePath();
-        float theta = dragHandleTheta==null ? editorService.getTheta() : dragHandleTheta;
+        
+        p.transform(AffineTransform.getScaleInstance(EditorService.HandleSize,
+                                                     EditorService.HandleSize));
+        p.transform(AffineTransform.getTranslateInstance(R, 0));
+        float theta = dragHandleTheta==null ? editorService.getTheta()
+                        : dragHandleTheta.floatValue() - 0.5f;
         double t = (theta + 0.5) * 2*Math.PI / C;
-        double x = R * Math.cos(t);
-        double y = R * Math.sin(t);
         p.transform(AffineTransform.getRotateInstance(t));
-        p.transform(AffineTransform.getTranslateInstance(x, y));
         p.transform(gridToScreenTransform);
+        
         g.setColor(Color.red);
         g.fill(p);
         g.setColor(Color.black);

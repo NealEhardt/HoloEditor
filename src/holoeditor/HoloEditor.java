@@ -61,7 +61,7 @@ public class HoloEditor {
     public static void makeNewWindow(File file, Frame frame) {
         EditorService editorService = new EditorService(displayService);
         if (frame == null) {
-            frame = new Frame(32, 8, 8);
+            frame = new Frame();
         }
         editorService.setFrame(frame);
         
