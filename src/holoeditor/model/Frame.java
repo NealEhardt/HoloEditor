@@ -38,19 +38,6 @@ public class Frame implements Serializable
     
     /**
      * 
-     * @param y [0, height)
-     * @return theta [0, circumference) * r [0, radius)
-     */
-    public boolean[][] getCircularSlice(int y) {
-        boolean[][] slice = new boolean[Circumference][];
-        for (int theta = 0; theta < Circumference; theta++) {
-            slice[theta] = data[theta][y].clone();
-        }
-        return slice;
-    }
-    
-    /**
-     * 
      * @param t [0, circumference)
      * @param y [0, height)
      * @param r [0, radius)
@@ -59,7 +46,6 @@ public class Frame implements Serializable
     public void setVoxel(int t, int y, int r, boolean color) {
         data[t][y][r] = color;
     }
-    
     public void setVoxel(PointTYR point, boolean color) {
         setVoxel((int)point.t, (int)point.y, (int)point.r, color);
     }

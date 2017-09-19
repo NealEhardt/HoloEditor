@@ -74,9 +74,6 @@ public class EditorService
         }
     }
     
-    public boolean[][] getCircularSlice() {
-        return frame.getCircularSlice(y);
-    }
     public void setVoxel(PointTYR point, boolean value) {
         this.setVoxel((int)point.t, (int)point.y, (int)point.r, value);
     }

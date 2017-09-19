@@ -23,7 +23,6 @@ import javax.swing.*;
 public class CircleEditPanel extends JPanel
 {
     final int C, R;
-    boolean[][] slice;
     int y;
     Frame frame;
     EditorService editorService;
@@ -41,7 +40,6 @@ public class CircleEditPanel extends JPanel
         this.editorService = editorService;
         C = holoeditor.model.Frame.Circumference;
         R = holoeditor.model.Frame.Radius;
-        slice = editorService.getCircularSlice();
         frame = editorService.getFrame();
         
         wireServiceEvents();
@@ -53,7 +51,6 @@ public class CircleEditPanel extends JPanel
         editorService.addListener(new EditorService.Listener() {
             @Override
             public void frameChanged() {
-                slice = editorService.getCircularSlice();
                 repaint();
             }
 
@@ -63,7 +60,6 @@ public class CircleEditPanel extends JPanel
             @Override
             public void yChanged(int y) {
                 CircleEditPanel.this.y = y;
-                slice = editorService.getCircularSlice();
                 repaint();
             }
         });
@@ -188,7 +184,7 @@ public class CircleEditPanel extends JPanel
         for (int r = R-1; r >= 0; r--) {
             arc.setArcByCenter(0, 0, r+1, 0, angleExtent, Arc2D.PIE);
             for (int theta = 0; theta < C; theta++) {
-                g.setColor(slice[theta][r] ? Color.white : Color.black);
+                g.setColor(frame.data[theta][y][r] ? Color.white : Color.black);
                 arc.setAngleStart((-theta - 1) * angleExtent);
                 g.fill(gridToScreenTransform.createTransformedShape(arc));
             }
