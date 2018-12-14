@@ -8,8 +8,12 @@ package holoeditor.view;
 import holoeditor.model.*;
 
 /**
- *
- * @author nehardt
+ * Paints sphere around target point, via Delegate.
+ * Over the lifecycle of a mouse interaction, call:
+ *   mousePressed: brush.begin
+ *   mouseDragged: brush.move
+ *   mouseReleased: brush.end
+ * @author Neal Ehardt
  */
 public class Brush {
     double weight = 2;
@@ -43,13 +47,14 @@ public class Brush {
     }
     
     void iterateT(PointTYR iter, PointTYR target) {
-        while (iter.distanceTo(target) < weight) {
+        // TODO cache targetXYZ
+        while (iter.distance(target) < weight) {
             iterateY(iter, target);
             iter.t++;
             if (iter.t % Frame.Circumference == Math.round(target.t)) break;
         }
         iter.t = Math.round(target.t) - 1;
-        while (iter.distanceTo(target) < weight) {
+        while (iter.distance(target) < weight) {
             iterateY(iter, target);
             iter.t--;
             if (Math.floorMod((int)iter.t, Frame.Circumference) == Math.round(target.t)) break;
@@ -58,12 +63,13 @@ public class Brush {
     }
     
     void iterateY(PointTYR iter, PointTYR target) {
-        while (iter.distanceTo(target) < weight) {
+        // TODO cache targetXYZ
+        while (iter.distance(target) < weight) {
             iterateR(iter, target);
             iter.y++;
         }
         iter.y = Math.round(target.y) - 1;
-        while (iter.distanceTo(target) < weight) {
+        while (iter.distance(target) < weight) {
             iterateR(iter, target);
             iter.y--;
         }
@@ -71,12 +77,13 @@ public class Brush {
     }
     
     void iterateR(PointTYR iter, PointTYR target) {
-        while (iter.distanceTo(target) < weight) {
+        // TODO cache targetXYZ
+        while (iter.distance(target) < weight) {
             delegate.setVoxel(iter, color);
             iter.r++;
         }
         iter.r = Math.round(target.r) - 1;
-        while (iter.distanceTo(target) < weight) {
+        while (iter.distance(target) < weight) {
             delegate.setVoxel(iter, color);
             iter.r--;
         }

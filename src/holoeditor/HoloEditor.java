@@ -16,8 +16,8 @@ import java.util.logging.*;
 import javax.swing.JFrame;
 
 /**
- *
- * @author nehardt
+ * Root of editor. Manages multiple windows.
+ * @author Neal Ehardt
  */
 public class HoloEditor {
     static DisplayService displayService;
@@ -47,6 +47,7 @@ public class HoloEditor {
         java.awt.EventQueue.invokeLater(() -> {
             displayService = new DisplayService();
             makeNewWindow();
+            displayService.start();
         });
     }
     

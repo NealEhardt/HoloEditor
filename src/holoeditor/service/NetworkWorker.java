@@ -21,7 +21,7 @@ public class NetworkWorker extends SwingWorker<Void, String> {
     
     public NetworkWorker() throws IOException {
         System.out.println("opening socket");
-        Socket socket = new Socket("localhost", 8080);
+        Socket socket = new Socket("localhost", 52137);
         writer = new OutputStreamWriter(socket.getOutputStream());
         writeIntro(writer);
         
@@ -45,6 +45,9 @@ public class NetworkWorker extends SwingWorker<Void, String> {
     protected Void doInBackground() throws Exception {
         while (true) {
             String packet = reader.readLine();
+            if (packet == null) { // stream is closed, y'all
+                return null;
+            }
             firePropertyChange("gotPacket", null, packet);
         }
     }

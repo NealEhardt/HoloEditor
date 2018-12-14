@@ -1,10 +1,10 @@
 package holoeditor.model;
 
-import javafx.geometry.Point3D;
+//import javafx.geometry.PointXYZ;
 
 /**
- *
- * @author nehardt
+ * Stores a 3D point in cylindrical coordinates (theta, y, radius).
+ * @author Neal Ehardt
  */
 public class PointTYR implements Cloneable {
     public double t, y, r;
@@ -20,17 +20,9 @@ public class PointTYR implements Cloneable {
         this.y = y;
         this.r = r;
     }
-    
-    public double distanceTo(PointTYR point) {
-        double d = to3D().distance(point.to3D());
-        return d;
-    }
-    
-    public Point3D to3D() {
-        double angle = t * 2*Math.PI / Frame.Circumference;
-        double x = r * Math.cos(angle);
-        double z = r * Math.sin(angle);
-        return new Point3D(x, this.y, z);
+
+    public double distance(PointTYR p) {
+        return new PointXYZ(this).distance(new PointXYZ(p));
     }
     
     @Override
