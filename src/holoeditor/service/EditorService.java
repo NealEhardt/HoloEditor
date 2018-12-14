@@ -6,7 +6,7 @@
 package holoeditor.service;
 
 import holoeditor.model.*;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  *
@@ -21,7 +21,7 @@ public class EditorService
     private Frame frame;
     private int theta;
     private int y;
-    ArrayList<Listener> listeners = new ArrayList<>();
+    HashSet<Listener> listeners = new HashSet<>();
     
     public interface Listener {
         public void frameChanged();

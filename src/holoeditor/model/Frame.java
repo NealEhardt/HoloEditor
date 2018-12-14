@@ -62,13 +62,13 @@ public class Frame implements Serializable
         return data[t][y][r];
     }
     
-    public byte[] getPacket(int theta) {
-        byte[] packet = new byte[Radius * 2];
+    public char[] getPacket(int theta) {
+        char[] packet = new char[Radius * 2];
         int i = 0;
         
         // near slice
         for (int r = Radius-1; r >= 0; r--) {
-            byte column = 0;
+            char column = 0;
             for (int y = 0; y < Height; y++) {
                 boolean b = data[theta][y][r];
                 column <<= 1;
@@ -80,7 +80,7 @@ public class Frame implements Serializable
         // far slice
         int farTheta = (theta + Circumference/2) % Circumference;
         for (int r = 0; r < Radius; r++) {
-            byte column = 0;
+            char column = 0;
             for (int y = 0; y < Height; y++) {
                 boolean b = data[farTheta][y][r];
                 column <<= 1;

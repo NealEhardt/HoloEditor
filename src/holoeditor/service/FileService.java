@@ -10,7 +10,7 @@ import holoeditor.model.Frame;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.function.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -28,7 +28,7 @@ public class FileService {
     File file;
     Frame frame;
     final static String introString = "HOL0.0.1";
-    ArrayList<Listener> listeners = new ArrayList<>();
+    HashSet<Listener> listeners = new HashSet<>();
     
     public FileService(EditorService editorService) {
         this.editorService = editorService;

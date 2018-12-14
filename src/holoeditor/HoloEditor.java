@@ -20,8 +20,6 @@ import javax.swing.JFrame;
  * @author nehardt
  */
 public class HoloEditor {
-
-    static SerialService serialService;
     static DisplayService displayService;
     
     static int windowCount = 0;
@@ -47,10 +45,8 @@ public class HoloEditor {
         //</editor-fold>
         
         java.awt.EventQueue.invokeLater(() -> {
-            serialService = new SerialService();
-            displayService = new DisplayService(serialService);
+            displayService = new DisplayService();
             makeNewWindow();
-            serialService.tryNextPort();
         });
     }
     
@@ -69,7 +65,7 @@ public class HoloEditor {
         fileService.setFile(file);
         
         EditorJFrame editorFrame = new EditorJFrame(editorService,
-                serialService, displayService, fileService);
+                displayService, fileService);
         String title = "Untitled.hol";
         if (file != null) {
             title = file.getName();

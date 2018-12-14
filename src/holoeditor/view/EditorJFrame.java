@@ -19,7 +19,6 @@ import javax.swing.JFrame;
 public class EditorJFrame extends JFrame
 {
     EditorService editorService;
-    SerialService serialService;
     DisplayService displayService;
     FileService fileService;
 
@@ -29,11 +28,9 @@ public class EditorJFrame extends JFrame
     
     public EditorJFrame(
             EditorService editorService,
-            SerialService serialService,
             DisplayService displayService,
             FileService fileService) {
         this.editorService = editorService;
-        this.serialService = serialService;
         this.displayService = displayService;
         this.fileService = fileService;
         
@@ -61,20 +58,18 @@ public class EditorJFrame extends JFrame
         centerPanel.add(rectPanel);
         
         statusLabel.setText("Starting...");
-        serialService.addListener(new SerialService.Adapter () {
+        
+        displayService.addListener(new DisplayService.Listener() {
             @Override
-            public void scanningPort(String portName) {
-                statusLabel.setText("Scanning port "+portName+"...");
+            public void connected() {
+                statusLabel.setText("Connected");
             }
+
             @Override
-            public void connectedToPort(String portName) {
-                statusLabel.setText("Connected to port "+portName+".");
+            public void disconnected() {
+                statusLabel.setText("Disconnected");
             }
         });
-        String portName = serialService.getPortName();
-        if (portName != null) {
-            statusLabel.setText("Connected to port "+portName+".");
-        }
     }
     
     private void initFocusListener() {
@@ -126,7 +121,7 @@ public class EditorJFrame extends JFrame
     }// </editor-fold>//GEN-END:initComponents
 
     private void reconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reconnectButtonActionPerformed
-        serialService.tryNextPort();
+        // I have nothing to do, this button should probably be deleted
     }//GEN-LAST:event_reconnectButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
