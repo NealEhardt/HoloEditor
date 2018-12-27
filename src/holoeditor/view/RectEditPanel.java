@@ -44,7 +44,6 @@ public class RectEditPanel extends JPanel
         frame = editorService.getFrame();
         
         wireServiceEvents();
-        wireComponentEvents();
         wireMouseEvents();
     }
     
@@ -65,14 +64,10 @@ public class RectEditPanel extends JPanel
             public void yChanged(int y) { }
         });
     }
-    
-    private void wireComponentEvents() {
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateTransforms();
-            }
-        });
+
+    @Override
+    public void doLayout() {
+        updateTransforms();
     }
     
     private void updateTransforms() {
@@ -85,7 +80,7 @@ public class RectEditPanel extends JPanel
         boolean isPanelWiderThanGrid = heightRatio < widthRatio;
         float scale = isPanelWiderThanGrid ? heightRatio : widthRatio;
         
-        float gridOffX = getWidth() / 2;
+        float gridOffX = getWidth() / 2f;
         float gridOffY = getHeight() * padRatio;
         if (isPanelWiderThanGrid) {
             gridOffX += (panelWidth - gridWidth * scale) / 2;
@@ -104,11 +99,8 @@ public class RectEditPanel extends JPanel
     }
     
     private void wireMouseEvents() {
-        brush = new Brush(new Brush.Delegate () {
-            @Override
-            public void setVoxel(PointTYR point, boolean color) {
-                editorService.setVoxel(point, color);
-            }
+        brush = new Brush((PointTYR point, boolean color) -> {
+            editorService.setVoxel(point, color);
         });
         
         addMouseListener(new MouseAdapter() {

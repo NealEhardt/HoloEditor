@@ -10,7 +10,7 @@ import holoeditor.service.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.File;
-import javax.swing.JFrame;
+import javax.swing.*;
 
 /**
  *
@@ -35,30 +35,22 @@ public class EditorJFrame extends JFrame
         this.fileService = fileService;
         
         initComponents();
-        initMoreComponents();
-        initFocusListener();
-        
-        fileService.addListener(new FileService.Adapter() {
-            @Override
-            public void fileChanged(File file) {
-                setTitle(file.getName());
-            }
-        });
-        
+        initListeners();
+
         setSize(700, 400);
     }
     
-    private void initMoreComponents() {
-        menuBar = new EditorMenuBar(editorService, fileService);
-        setJMenuBar(menuBar);
-        
-        circlePanel = new CircleEditPanel(editorService);
-        centerPanel.add(circlePanel);
-        rectPanel = new RectEditPanel(editorService);
-        centerPanel.add(rectPanel);
-        
-        statusLabel.setText("Starting...");
-        
+    private void initListeners() {
+        addWindowFocusListener(new WindowFocusListener() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                System.out.println("FOCUS");
+                displayService.setFrame(editorService.getFrame());
+            }
+            @Override
+            public void windowLostFocus(WindowEvent e) { }
+        });
+
         displayService.addListener(new DisplayService.Listener() {
             @Override
             public void connected() {
@@ -70,46 +62,42 @@ public class EditorJFrame extends JFrame
                 statusLabel.setText("Disconnected");
             }
         });
-    }
-    
-    private void initFocusListener() {
-        addWindowFocusListener(new WindowFocusListener() {
+
+        fileService.addListener(new FileService.Adapter() {
             @Override
-            public void windowGainedFocus(WindowEvent e) {
-                displayService.setFrame(editorService.getFrame());
+            public void fileChanged(File file) {
+                setTitle(file.getName());
             }
-            @Override
-            public void windowLostFocus(WindowEvent e) { }
         });
     }
 
     private void initComponents() {
-        centerPanel = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
-        statusLabel = new javax.swing.JLabel();
-        reconnectButton = new javax.swing.JButton();
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        menuBar = new EditorMenuBar(editorService, fileService);
+        setJMenuBar(menuBar);
 
-        centerPanel.setLayout(new java.awt.GridLayout(1, 2));
+        JPanel centerPanel = new JPanel(new java.awt.GridLayout(1, 2));
+        circlePanel = new CircleEditPanel(editorService);
+        centerPanel.add(circlePanel);
+        rectPanel = new RectEditPanel(editorService);
+        centerPanel.add(rectPanel);
         getContentPane().add(centerPanel, java.awt.BorderLayout.CENTER);
 
-        jPanel1.setLayout(new java.awt.BorderLayout());
+        JPanel footerPanel = new JPanel();
+        footerPanel.setLayout(new java.awt.BorderLayout());
 
-        statusLabel.setText("status label");
-        jPanel1.add(statusLabel, java.awt.BorderLayout.CENTER);
+        statusLabel = new JLabel("Starting...");
+        footerPanel.add(statusLabel, java.awt.BorderLayout.CENTER);
 
-        reconnectButton.setText("Reconnect");
+        JButton reconnectButton = new JButton("Reconnect");
         reconnectButton.setEnabled(false);
-        jPanel1.add(reconnectButton, java.awt.BorderLayout.LINE_END);
+        footerPanel.add(reconnectButton, java.awt.BorderLayout.LINE_END);
 
-        getContentPane().add(jPanel1, java.awt.BorderLayout.PAGE_END);
+        getContentPane().add(footerPanel, java.awt.BorderLayout.PAGE_END);
 
         pack();
     }
 
-    private javax.swing.JPanel centerPanel;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JButton reconnectButton;
-    private javax.swing.JLabel statusLabel;
+    private JLabel statusLabel;
 }

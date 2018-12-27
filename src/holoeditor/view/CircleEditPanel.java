@@ -43,7 +43,6 @@ public class CircleEditPanel extends JPanel
         frame = editorService.getFrame();
         
         wireServiceEvents();
-        wireComponentEvents();
         wireMouseEvents();
     }
     
@@ -64,14 +63,10 @@ public class CircleEditPanel extends JPanel
             }
         });
     }
-    
-    private void wireComponentEvents() {
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateTransforms();
-            }
-        });
+
+    @Override
+    public void doLayout() {
+        updateTransforms();
     }
     
     private void updateTransforms() {
@@ -82,8 +77,8 @@ public class CircleEditPanel extends JPanel
             ? panelHeight / gridR
             : panelWidth / gridR;
         
-        float gridOffX = getWidth() / 2;
-        float gridOffY = getHeight() / 2;
+        float gridOffX = getWidth() / 2f;
+        float gridOffY = getHeight() / 2f;
         gridToScreenTransform = AffineTransform.getTranslateInstance(gridOffX, gridOffY);
         gridToScreenTransform.scale(scale, -scale);
         try {
@@ -96,11 +91,8 @@ public class CircleEditPanel extends JPanel
     }
     
     private void wireMouseEvents() {
-        brush = new Brush(new Brush.Delegate () {
-            @Override
-            public void setVoxel(PointTYR point, boolean color) {
-                editorService.setVoxel(point, color);
-            }
+        brush = new Brush((PointTYR point, boolean color) -> {
+            editorService.setVoxel(point, color);
         });
         
         addMouseListener(new MouseAdapter() {
