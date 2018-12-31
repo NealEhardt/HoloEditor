@@ -22,7 +22,11 @@ public class PointTYR implements Cloneable {
     }
 
     public double distance(PointTYR p) {
-        return new PointXYZ(this).distance(new PointXYZ(p));
+        return distance(new PointXYZ(p));
+    }
+
+    public double distance(PointXYZ p) {
+        return new PointXYZ(this).distance(p);
     }
     
     @Override

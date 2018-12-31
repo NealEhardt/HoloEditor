@@ -38,16 +38,27 @@ public class Frame implements Serializable
     
     /**
      * 
-     * @param t [0, circumference)
-     * @param y [0, height)
-     * @param r [0, radius)
-     * @param color
+     * @param t any value, will be modulo'd to [0, Circumference)
+     * @param y [0, +Height)
+     * @param r (-Radius, +Radius)
      */
     public void setVoxel(int t, int y, int r, boolean color) {
-        data[t][y][r] = color;
+        if (r < 0) {
+            r *= -1;
+            t += Circumference / 2;
+        }
+        t = Math.floorMod(t, Circumference);
+        if (y >= 0 && y < Height && r < Radius) {
+            data[t][y][r] = color;
+        }
     }
+
     public void setVoxel(PointTYR point, boolean color) {
-        setVoxel((int)point.t, (int)point.y, (int)point.r, color);
+        boolean q = point.r < 0;
+        setVoxel((int)(q ? point.t + Circumference/2 : point.t),
+                (int)point.y,
+                (int)(q ? -point.r : point.r),
+                color);
     }
     
     public boolean getVoxel(PointTYR point) {

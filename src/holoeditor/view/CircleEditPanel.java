@@ -33,11 +33,12 @@ public class CircleEditPanel extends JPanel
     AffineTransform gridToScreenTransform;
     AffineTransform screenToGridTransform;
     
-    Brush brush = null;
+    Brush brush;
     Double dragHandleTheta = null;
     
-    public CircleEditPanel(EditorService editorService) {
+    public CircleEditPanel(EditorService editorService, Brush brush) {
         this.editorService = editorService;
+        this.brush = brush;
         C = holoeditor.model.Frame.Circumference;
         R = holoeditor.model.Frame.Radius;
         frame = editorService.getFrame();
@@ -91,10 +92,6 @@ public class CircleEditPanel extends JPanel
     }
     
     private void wireMouseEvents() {
-        brush = new Brush((PointTYR point, boolean color) -> {
-            editorService.setVoxel(point, color);
-        });
-        
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -108,6 +105,7 @@ public class CircleEditPanel extends JPanel
                     repaint();
                 }
             }
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 PointTYR p = fromScreenToGrid(e.getPoint());
@@ -131,6 +129,11 @@ public class CircleEditPanel extends JPanel
                     editorService.setTheta(dragHandleTheta.intValue());
                     repaint();
                 }
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                repaint();
             }
         });
     }
@@ -166,6 +169,13 @@ public class CircleEditPanel extends JPanel
         
         // paint children
         paintGrid(g2);
+        Point p = getMousePosition();
+        if (p != null && dragHandleTheta == null) {
+            PointTYR q = fromScreenToGrid(p);
+            if (q.r < R || brush.isPainting()) {
+                brush.paintPreview(g2, p, gridToScreenTransform.getScaleX());
+            }
+        }
         paintHandle(g2);
     }
     

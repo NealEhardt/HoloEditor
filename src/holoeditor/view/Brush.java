@@ -6,6 +6,11 @@
 package holoeditor.view;
 
 import holoeditor.model.*;
+import holoeditor.model.Frame;
+
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 
 /**
  * Paints sphere around target point, via Delegate.
@@ -16,8 +21,6 @@ import holoeditor.model.*;
  * @author Neal Ehardt
  */
 public class Brush {
-    double weight = 2;
-    
     public interface Delegate {
         void setVoxel(PointTYR point, boolean color);
     }
@@ -29,73 +32,86 @@ public class Brush {
     }
     
     boolean isPainting;
-    public boolean isPainting() {
+    boolean isPainting() {
         return isPainting;
     }
+
+    private double weight = 2;
+    void setWeight(double weight) { this.weight = weight; System.out.println("weight " + weight); }
     
     boolean color;
-    public void setColor(boolean color) {
+    void setColor(boolean color) {
         this.color = color;
+    }
+
+    void paintPreview(Graphics2D g, Point mousePosition, double scale) {
+        if (mousePosition == null) return;
+
+        double r = weight * scale;
+        double x = mousePosition.x - r;
+        double y = mousePosition.y - r;
+
+        g.setColor(Color.orange);
+        g.draw(new Ellipse2D.Double(x, y, 2 * r, 2 * r));
+    }
+
+    double roundHalf(double v) {
+        return Math.floor(v) + 0.5;
     }
     
     public void begin(PointTYR point) {
         isPainting = true;
         
-        PointTYR iter = new PointTYR(Math.round(point.t),
-                                    Math.round(point.y), Math.round(point.r));
-        iterateT(iter, point);
-    }
-    
-    void iterateT(PointTYR iter, PointTYR target) {
-        // TODO cache targetXYZ
-        while (iter.distance(target) < weight) {
+        PointTYR iter = new PointTYR(0.5, roundHalf(point.y), roundHalf(point.r));
+        PointXYZ target = new PointXYZ(point);
+        for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
             iterateY(iter, target);
-            iter.t++;
-            if (iter.t % Frame.Circumference == Math.round(target.t)) break;
         }
-        iter.t = Math.round(target.t) - 1;
-        while (iter.distance(target) < weight) {
-            iterateY(iter, target);
-            iter.t--;
-            if (Math.floorMod((int)iter.t, Frame.Circumference) == Math.round(target.t)) break;
-        }
-        iter.t = Math.round(target.t);
     }
-    
-    void iterateY(PointTYR iter, PointTYR target) {
-        // TODO cache targetXYZ
-        while (iter.distance(target) < weight) {
+
+    public void move(PointTYR point) {
+        begin(point); // TODO: interpolate
+    }
+
+    public void end(PointTYR point) {
+        move(point);
+        isPainting = false;
+    }
+
+    void iterateY(PointTYR iter, PointXYZ target) {
+        if (iter.distance(target) < weight) {
             iterateR(iter, target);
+
+            double startY = iter.y;
             iter.y++;
+            while (iter.distance(target) < weight) {
+                iterateR(iter, target);
+                iter.y++;
+            }
+            iter.y = startY - 1;
+            while (iter.distance(target) < weight) {
+                iterateR(iter, target);
+                iter.y--;
+            }
+            iter.y = startY;
         }
-        iter.y = Math.round(target.y) - 1;
-        while (iter.distance(target) < weight) {
-            iterateR(iter, target);
-            iter.y--;
-        }
-        iter.y = Math.round(target.y);
     }
     
-    void iterateR(PointTYR iter, PointTYR target) {
-        // TODO cache targetXYZ
+    void iterateR(PointTYR iter, PointXYZ target) {
+        System.out.println("setting " + iter);
+        delegate.setVoxel(iter, color);
+
+        double startR = iter.r;
+        iter.r++;
         while (iter.distance(target) < weight) {
             delegate.setVoxel(iter, color);
             iter.r++;
         }
-        iter.r = Math.round(target.r) - 1;
+        iter.r = startR - 1;
         while (iter.distance(target) < weight) {
             delegate.setVoxel(iter, color);
             iter.r--;
         }
-        iter.r = Math.round(target.r);
-    }
-    
-    public void move(PointTYR point) {
-        begin(point); // TODO: interpolate
-    }
-    
-    public void end(PointTYR point) {
-        move(point);
-        isPainting = false;
+        iter.r = startR;
     }
 }

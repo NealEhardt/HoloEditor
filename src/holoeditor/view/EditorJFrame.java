@@ -5,11 +5,12 @@
  */
 package holoeditor.view;
 
-import holoeditor.model.Frame;
+import holoeditor.model.PointTYR;
 import holoeditor.service.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.File;
+import java.util.Hashtable;
 import javax.swing.*;
 
 /**
@@ -21,6 +22,7 @@ public class EditorJFrame extends JFrame
     EditorService editorService;
     DisplayService displayService;
     FileService fileService;
+    Brush brush;
 
     EditorMenuBar menuBar;
     CircleEditPanel circlePanel;
@@ -33,6 +35,9 @@ public class EditorJFrame extends JFrame
         this.editorService = editorService;
         this.displayService = displayService;
         this.fileService = fileService;
+        brush = new Brush((PointTYR point, boolean color) -> {
+            editorService.setVoxel(point, color);
+        });
         
         initComponents();
         initListeners();
@@ -44,7 +49,6 @@ public class EditorJFrame extends JFrame
         addWindowFocusListener(new WindowFocusListener() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
-                System.out.println("FOCUS");
                 displayService.setFrame(editorService.getFrame());
             }
             @Override
@@ -69,6 +73,8 @@ public class EditorJFrame extends JFrame
                 setTitle(file.getName());
             }
         });
+
+        weightSlider.addChangeListener(e -> brush.setWeight(weightSlider.getValue() / 10d));
     }
 
     private void initComponents() {
@@ -78,9 +84,9 @@ public class EditorJFrame extends JFrame
         setJMenuBar(menuBar);
 
         JPanel centerPanel = new JPanel(new java.awt.GridLayout(1, 2));
-        circlePanel = new CircleEditPanel(editorService);
+        circlePanel = new CircleEditPanel(editorService, brush);
         centerPanel.add(circlePanel);
-        rectPanel = new RectEditPanel(editorService);
+        rectPanel = new RectEditPanel(editorService, brush);
         centerPanel.add(rectPanel);
         getContentPane().add(centerPanel, java.awt.BorderLayout.CENTER);
 
@@ -90,9 +96,19 @@ public class EditorJFrame extends JFrame
         statusLabel = new JLabel("Starting...");
         footerPanel.add(statusLabel, java.awt.BorderLayout.CENTER);
 
-        JButton reconnectButton = new JButton("Reconnect");
-        reconnectButton.setEnabled(false);
-        footerPanel.add(reconnectButton, java.awt.BorderLayout.LINE_END);
+        int K = 10; // Slider uses integers, so 1 slider tick = 0.1 brush weight.
+        int MIN = 8; // When weight < sqrt(6)/4 ≈ 0.61, the Brush has issues.
+        weightSlider = new JSlider(MIN, 5*K, 2*K);
+        weightSlider.setMajorTickSpacing(2);
+        weightSlider.setMinorTickSpacing(1);
+        Hashtable<Integer, JComponent> table = new Hashtable<>();
+        for (int i = K; i <= weightSlider.getMaximum(); i += K) {
+            table.put(i, new JLabel(Integer.toString(i/K)));
+        }
+        weightSlider.setLabelTable(table);
+        weightSlider.setPaintLabels(true);
+        weightSlider.setPaintTicks(true);
+        footerPanel.add(weightSlider, java.awt.BorderLayout.LINE_END);
 
         getContentPane().add(footerPanel, java.awt.BorderLayout.PAGE_END);
 
@@ -100,4 +116,5 @@ public class EditorJFrame extends JFrame
     }
 
     private JLabel statusLabel;
+    private JSlider weightSlider;
 }

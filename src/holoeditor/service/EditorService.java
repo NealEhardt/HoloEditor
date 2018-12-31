@@ -22,7 +22,7 @@ public class EditorService
     private int theta;
     private int y;
     HashSet<Listener> listeners = new HashSet<>();
-    
+
     public interface Listener {
         public void frameChanged();
         public void thetaChanged(int theta);
@@ -75,20 +75,10 @@ public class EditorService
     }
     
     public void setVoxel(PointTYR point, boolean value) {
-        this.setVoxel((int)point.t, (int)point.y, (int)point.r, value);
-    }
-    public void setVoxel(int t, int y, int r, boolean value) {
-        if (r < 0) {
-            r *= -1;
-            t += Frame.Circumference / 2;
-        }
-        t = Math.floorMod(t, Frame.Circumference);
-        if (y >= 0 && y < Frame.Height
-                && r < Frame.Radius) {
-            frame.setVoxel(Math.floorMod(t, Frame.Circumference), y, r, value);
-            for (Listener l : listeners) {
-                l.frameChanged();
-            }
+        frame.setVoxel(point, value);
+
+        for (Listener l : listeners) {
+            l.frameChanged();
         }
     }
 }

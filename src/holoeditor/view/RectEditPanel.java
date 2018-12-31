@@ -34,11 +34,12 @@ public class RectEditPanel extends JPanel
     AffineTransform gridToScreenTransform;
     AffineTransform screenToGridTransform;
     
-    Brush brush = null;
+    Brush brush;
     Double dragHandleY = null;
     
-    public RectEditPanel(EditorService editorService) {
+    public RectEditPanel(EditorService editorService, Brush brush) {
         this.editorService = editorService;
+        this.brush = brush;
         H = holoeditor.model.Frame.Height;
         R = holoeditor.model.Frame.Radius;
         frame = editorService.getFrame();
@@ -99,19 +100,15 @@ public class RectEditPanel extends JPanel
     }
     
     private void wireMouseEvents() {
-        brush = new Brush((PointTYR point, boolean color) -> {
-            editorService.setVoxel(point, color);
-        });
-        
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 PointTYR p = fromScreenToGrid(e.getPoint());
-                if (p.r >= R) {
+                if (p.r > R) {
                     dragHandleY = Math.max(0, Math.min(H-.01, p.y));
                     editorService.setY(dragHandleY.intValue());
                     repaint();
-                } else if (p.y >= 0 && p.y < H && p.r >= -R) {
+                } else if (isInSlice(p)) {
                     brush.setColor(!frame.getVoxel(p));
                     brush.begin(p);
                 }
@@ -123,6 +120,11 @@ public class RectEditPanel extends JPanel
                     brush.end(p);
                 }
                 dragHandleY = null;
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
                 repaint();
             }
         });
@@ -140,6 +142,11 @@ public class RectEditPanel extends JPanel
                     repaint();
                 }
             }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                repaint();
+            }
         });
     }
     
@@ -153,6 +160,10 @@ public class RectEditPanel extends JPanel
         double r = result.getX();
         double y = result.getY();
         return new PointTYR(theta, y, r);
+    }
+
+    private boolean isInSlice(PointTYR p) {
+        return p.y >= 0 && p.y < H && p.r >= -R && p.r <= R;
     }
     
     @Override
@@ -168,6 +179,12 @@ public class RectEditPanel extends JPanel
         
         // paint children
         paintGrid(g2);
+        Point p = getMousePosition();
+        if (p != null && dragHandleY == null) {
+            if (isInSlice(fromScreenToGrid(p)) || brush.isPainting()) {
+                brush.paintPreview(g2, p, gridToScreenTransform.getScaleX());
+            }
+        }
         paintHandle(g2);
     }
     
@@ -176,12 +193,12 @@ public class RectEditPanel extends JPanel
         Rectangle2D rect = new Rectangle2D.Float();
         g.setColor(Color.black);
         int farTheta = Math.floorMod(theta + Frame.Circumference/2,
-                                        Frame.Circumference);
+                                     Frame.Circumference);
         for (int r = -R; r < R; r++) {
             for (int y = 0; y < H; y++) {
                 boolean color;
                 if (r < 0) {
-                    int farR = -r-1;
+                    int farR = -r - 1;
                     color = frame.data[farTheta][y][farR];
                 } else {
                     color = frame.data[theta][y][r];
@@ -217,7 +234,7 @@ public class RectEditPanel extends JPanel
         p.closePath();
         float y = dragHandleY==null ? editorService.getY()
                     : dragHandleY.floatValue() - 0.5f;
-        
+
         p.transform(AffineTransform.getScaleInstance(EditorService.HandleSize,
                                                      EditorService.HandleSize));
         p.transform(AffineTransform.getTranslateInstance(R, y));
