@@ -228,12 +228,12 @@ public class RectEditPanel extends JPanel
     
     void paintHandle(Graphics2D g) {
         Path2D.Float p = new Path2D.Float();
-        p.moveTo(0, .5);
-        p.lineTo(1, 0);
-        p.lineTo(1, 1);
+        p.moveTo(0, 0);
+        p.lineTo(1, -.5);
+        p.lineTo(1, .5);
         p.closePath();
-        float y = dragHandleY==null ? editorService.getY()
-                    : dragHandleY.floatValue() - 0.5f;
+        float y = dragHandleY==null ? editorService.getY() + .5f
+                    : dragHandleY.floatValue();
 
         p.transform(AffineTransform.getScaleInstance(EditorService.HandleSize,
                                                      EditorService.HandleSize));

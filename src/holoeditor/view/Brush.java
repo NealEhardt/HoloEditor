@@ -98,7 +98,6 @@ public class Brush {
     }
     
     void iterateR(PointTYR iter, PointXYZ target) {
-        System.out.println("setting " + iter);
         delegate.setVoxel(iter, color);
 
         double startR = iter.r;
