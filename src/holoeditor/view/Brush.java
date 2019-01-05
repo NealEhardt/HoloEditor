@@ -23,6 +23,7 @@ import java.awt.geom.Ellipse2D;
 public class Brush {
     public interface Delegate {
         void setVoxel(PointTYR point, boolean color);
+        void commitChanges();
     }
     
     Delegate delegate;
@@ -67,6 +68,8 @@ public class Brush {
         for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
             iterateY(iter, target);
         }
+
+        delegate.commitChanges();
     }
 
     public void move(PointTYR point) {

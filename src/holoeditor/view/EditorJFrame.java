@@ -35,8 +35,16 @@ public class EditorJFrame extends JFrame
         this.editorService = editorService;
         this.displayService = displayService;
         this.fileService = fileService;
-        brush = new Brush((PointTYR point, boolean color) -> {
-            editorService.setVoxel(point, color);
+        brush = new Brush(new Brush.Delegate() {
+            @Override
+            public void setVoxel(PointTYR point, boolean color) {
+                editorService.setVoxel(point, color);
+            }
+
+            @Override
+            public void commitChanges() {
+                editorService.commitChanges();
+            }
         });
         
         initComponents();
@@ -59,12 +67,28 @@ public class EditorJFrame extends JFrame
             @Override
             public void connected() {
                 statusLabel.setText("Connected");
+                if (EditorJFrame.this.isFocused()) {
+                    displayService.setFrame(editorService.getFrame());
+                }
             }
 
             @Override
             public void disconnected() {
                 statusLabel.setText("Disconnected");
             }
+        });
+
+        editorService.addListener(new EditorService.Listener() {
+            @Override
+            public void frameChanged() {
+                displayService.setFrame(editorService.getFrame());
+            }
+
+            @Override
+            public void thetaChanged(int theta) { }
+
+            @Override
+            public void yChanged(int y) { }
         });
 
         fileService.addListener(new FileService.Adapter() {
@@ -93,7 +117,8 @@ public class EditorJFrame extends JFrame
         JPanel footerPanel = new JPanel();
         footerPanel.setLayout(new java.awt.BorderLayout());
 
-        statusLabel = new JLabel("Starting...");
+        statusLabel = new JLabel(displayService.isConnected()
+                                    ? "Connected" : "Disconnected");
         footerPanel.add(statusLabel, java.awt.BorderLayout.CENTER);
 
         int K = 10; // Slider uses integers, so 1 slider tick = 0.1 brush weight.

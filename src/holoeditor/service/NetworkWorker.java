@@ -2,43 +2,44 @@ package holoeditor.service;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.SwingWorker;
 
 /**
- * Connects to the display by TCP. Call writeSlicePacket to send data.
- * Use addPropertyChangeListener for "connected" and "gotPacket" events.
+ * Constructor connects to the display by TCP on caller's thread.
+ * Reads lines from the network on its background thread.
+ * Use addPropertyChangeListener for "state", and "gotPacket" events.
+ * Events are received on the Event Dispatch Thread, so they are safe for Swing components.
  * 
- * See SwingWorker docs for more info about its lifecycle.
+ * Lifecycle details --
+ * https://docs.oracle.com/javase/10/docs/api/javax/swing/SwingWorker.html
  * 
  * @author Neal
  */
 public class NetworkWorker extends SwingWorker<Void, String> {
-    final BlockingQueue<byte[]> writeQueue = new LinkedBlockingQueue<>();
     BufferedReader reader;
+    OutputStream outputStream;
     OutputStreamWriter writer;
-    
+
+    /**
+     * Connects to the display by TCP on caller's thread.
+     */
     public NetworkWorker() throws IOException {
-        System.out.println("opening socket");
-        Socket socket = new Socket("localhost", 52137);
-        writer = new OutputStreamWriter(socket.getOutputStream());
-        writeIntro(writer);
-        
+        String host = "glados.mshome.net";
+        int port = 52137;
+        System.out.println("Connecting to " + host + ":" + port + ".");
+        Socket socket = new Socket(host, port);
+        outputStream = socket.getOutputStream();
+        writer = new OutputStreamWriter(outputStream);
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        firePropertyChange("connected", null, null);
+        doHandshake(writer, reader);
     }
     
-    void writeIntro(OutputStreamWriter writer) throws IOException {
+    void doHandshake(OutputStreamWriter writer, BufferedReader reader) throws IOException {
         writer.write("What's up Armadillo?\n");
         writer.flush();
-        System.out.println("flushed");
-    }
-    
-    public void writeSlicePacket(char[] packet) throws IOException {
-        if (writer != null) {
-            writer.write(packet);
-        }
+
+        String response = reader.readLine();
+        System.out.println(">> " + response); // TODO: validate?
     }
 
     @Override

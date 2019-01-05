@@ -6,8 +6,14 @@
 package holoeditor.service;
 
 import holoeditor.model.*;
+
+import javax.swing.*;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.HashSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -16,11 +22,10 @@ import java.util.concurrent.TimeUnit;
  * @author Neal Ehardt
  */
 public class DisplayService {
-    Frame frame;
-    volatile int sliceTheta;
-    volatile long period = 2_000_000_000L;
-    volatile long lastTick = System.nanoTime();
-    HashSet<Listener> listeners = new HashSet<Listener>();
+    boolean isConnected = false;
+    final HashSet<Listener> listeners = new HashSet<Listener>();
+    final LinkedBlockingDeque<Frame> frameQueue = new LinkedBlockingDeque<>();
+    final Frame disconnectSignal = new Frame();
     
     public interface Listener {
         void connected();
@@ -35,6 +40,8 @@ public class DisplayService {
     public void removeListener(Listener listener) {
         listeners.remove(listener);
     }
+
+    public boolean isConnected() { return isConnected; }
     
     public void start() {
         new Thread(() -> {
@@ -42,14 +49,12 @@ public class DisplayService {
                 while(true) {
                     try {
                         NetworkWorker worker = spawnWorker();
-                        loopWithWorker(worker);
+                        blockAndWriteFrames(worker);
                     } catch (IOException ex) {
                         System.err.println("network broke");
                         System.err.println(ex);
-                        for (Listener i : listeners) {
-                            i.disconnected();
-                        }
                     }
+                    frameQueue.clear();
                     Thread.sleep(5000);
                 }
             } catch (InterruptedException ex) {
@@ -59,16 +64,23 @@ public class DisplayService {
     }
     
     public void setFrame(Frame frame) {
-        this.frame = frame;
+        new Frame(frame);
+        frameQueue.add(frame);
     }
     
     NetworkWorker spawnWorker() throws IOException {
         NetworkWorker worker = new NetworkWorker();
-        worker.addPropertyChangeListener((evt) -> {
-            String prop = evt.getPropertyName();
-            switch (prop) {
-                case "connected":
-                    handleConnected();
+        worker.addPropertyChangeListener((evt) -> { // on Event Dispatch Thread
+            switch (evt.getPropertyName()) {
+                case "state":
+                    switch ((SwingWorker.StateValue)evt.getNewValue()) {
+                    case STARTED:
+                        handleConnected();
+                        break;
+                    case DONE:
+                        handleDisconnected();
+                        break;
+                    }
                     break;
                 case "gotPacket":
                     String packet = (String)evt.getNewValue();
@@ -80,37 +92,46 @@ public class DisplayService {
         return worker;
     }
     
-    void loopWithWorker(NetworkWorker worker) throws IOException, InterruptedException {
+    void blockAndWriteFrames(NetworkWorker worker) throws IOException, InterruptedException {
         while (true) {
-            worker.writeSlicePacket(frame.getPacket(sliceTheta % Frame.Circumference));
-            sliceTheta++;
+            // Clear the queue and get the last frame
+            while (frameQueue.size() > 1) {
+                Frame f = frameQueue.take();
+                if (f == disconnectSignal) return;
+            }
+            Frame frame = frameQueue.take();
+            if (frame == disconnectSignal) return;
 
-            long nextSliceTime = lastTick + period * sliceTheta / Frame.Circumference;
-            long sleepTime = nextSliceTime - System.nanoTime();
-            if (sleepTime > 0) {
-                //System.out.println("sleep " + sleepTime);
-                TimeUnit.NANOSECONDS.sleep(sleepTime);
+            // Write status and frame
+            OutputStream out = worker.outputStream;
+            OutputStreamWriter writer = worker.writer;
+            if (out != null && writer != null) {
+                writer.write("Status: All Gravy\n");
+                writer.flush();
+
+                byte[] bytes = frame.getMatrixEncoding();
+                out.write(bytes);
+                out.flush();
             }
         }
     }
     
     void handleConnected() {
+        isConnected = true;
         for (Listener i : listeners) {
             i.connected();
         }
     }
     
     void handlePacket(String packet) {
-        System.out.println("packet " + packet);
-        if ("tick".equals(packet)) {
-            long t = System.nanoTime();
-            long newPeriod = t - lastTick;
-            if (newPeriod > 10_000_000) {
-                period = t - lastTick;
-                lastTick = t;
-                sliceTheta = 0;
-                System.out.println("period = " + period);
-            }
+        System.out.println(">> " + packet); // dead for now
+    }
+
+    void handleDisconnected() {
+        isConnected = false;
+        frameQueue.add(disconnectSignal);
+        for (Listener i : listeners) {
+            i.disconnected();
         }
     }
 }

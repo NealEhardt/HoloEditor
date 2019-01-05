@@ -21,12 +21,12 @@ public class EditorService
     private Frame frame;
     private int theta;
     private int y;
-    HashSet<Listener> listeners = new HashSet<>();
+    final private HashSet<Listener> listeners = new HashSet<>();
 
     public interface Listener {
-        public void frameChanged();
-        public void thetaChanged(int theta);
-        public void yChanged(int y);
+        void frameChanged();
+        void thetaChanged(int theta);
+        void yChanged(int y);
     }
     
     public EditorService(DisplayService displayService) {
@@ -76,7 +76,9 @@ public class EditorService
     
     public void setVoxel(PointTYR point, boolean value) {
         frame.setVoxel(point, value);
+    }
 
+    public void commitChanges() {
         for (Listener l : listeners) {
             l.frameChanged();
         }
