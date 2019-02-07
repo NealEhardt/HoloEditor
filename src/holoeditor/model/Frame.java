@@ -90,6 +90,11 @@ public class Frame implements Serializable
 
     final int SLICE_SIZE = 2 * Radius * Height / 8; // * 1-bit color
 
+    /**
+     * Serializes this Frame as a series of slices. Each slice has a bit order
+     * that can be written directly to the matrix.
+     * @return
+     */
     public byte[] getMatrixEncoding() {
         byte[] buffer = new byte[SLICE_SIZE * Circumference];
         for (int theta = 0; theta < Circumference; theta++) {
@@ -105,8 +110,8 @@ public class Frame implements Serializable
         byte[] slice = new byte[SLICE_SIZE];
 
         int idx = 0;
-        for (int register_row = Height / 4 - 1; register_row >= 0; register_row--) {
-            for (int byte_column = Radius - 1; byte_column >= 0; byte_column--) { // 15, 14...0
+        for (int register_row = Height / 4 - 1; register_row >= 0; register_row--) { // 5, 4, ...,0
+            for (int byte_column = Radius - 1; byte_column >= 0; byte_column--) { // 15, 14, ...,0
                 int t = theta;
                 int r = 2 * byte_column - Radius + 1;
                 if (byte_column < Radius / 2) {
@@ -115,7 +120,7 @@ public class Frame implements Serializable
                 }
                 byte b = 0;
                 for (int bit = 7; bit >= 0; bit--) {
-                    int y = register_row + (bit % 4);
+                    int y = 4 * register_row + (bit % 4);
                     if (bit == 3) {
                         r += t == theta ? -1 : +1;
                     }
