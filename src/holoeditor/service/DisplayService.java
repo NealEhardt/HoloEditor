@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package holoeditor.service;
 
 import holoeditor.model.*;
@@ -64,7 +59,6 @@ public class DisplayService {
     }
     
     public void setFrame(Frame frame) {
-        new Frame(frame);
         frameQueue.add(frame);
     }
     
@@ -124,7 +118,7 @@ public class DisplayService {
     }
     
     void handlePacket(String packet) {
-        System.out.println(">> " + packet); // dead for now
+        System.out.println(">> " + packet);
     }
 
     void handleDisconnected() {

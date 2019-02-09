@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package holoeditor.model;
 
 import java.io.Serializable;
@@ -93,7 +88,7 @@ public class Frame implements Serializable
     /**
      * Serializes this Frame as a series of slices. Each slice has a bit order
      * that can be written directly to the matrix.
-     * @return
+     * @return frame for matrix
      */
     public byte[] getMatrixEncoding() {
         byte[] buffer = new byte[SLICE_SIZE * Circumference];

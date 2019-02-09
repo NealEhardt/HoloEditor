@@ -1,13 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package holoeditor.view;
 
 import holoeditor.HoloEditor;
 import holoeditor.service.*;
-import java.awt.Event;
+import java.awt.event.InputEvent;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import javax.swing.*;
@@ -48,12 +43,12 @@ public class EditorMenuBar extends JMenuBar {
         fileMenu.add(saveMenuItem = new JMenuItem("Save"));
         fileMenu.add(saveAsMenuItem = new JMenuItem("Save As..."));
         
-        int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
         newMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, menuShortcutKeyMask));
         openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, menuShortcutKeyMask));
         saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKeyMask));
         saveAsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                menuShortcutKeyMask | Event.SHIFT_MASK));
+                menuShortcutKeyMask | InputEvent.SHIFT_DOWN_MASK));
         
         newMenuItem.addActionListener((e) -> HoloEditor.makeNewWindow());
         openMenuItem.addActionListener((e) -> FileService.openFile(this));
