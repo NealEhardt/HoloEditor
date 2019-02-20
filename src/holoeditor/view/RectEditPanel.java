@@ -44,7 +44,7 @@ public class RectEditPanel extends JPanel
     }
     
     private void wireServiceEvents() {
-        editorService.addListener(new EditorService.Listener() {
+        editorService.addListener(new EditorService.Adapter() {
             @Override
             public void frameChanged() {
                 repaint();
@@ -55,9 +55,6 @@ public class RectEditPanel extends JPanel
                 RectEditPanel.this.theta = theta;
                 repaint();
             }
-
-            @Override
-            public void yChanged(int y) { }
         });
     }
 
@@ -104,7 +101,6 @@ public class RectEditPanel extends JPanel
                     editorService.setY(dragHandleY.intValue());
                     repaint();
                 } else if (isInSlice(p)) {
-                    brush.setColor(!frame.getVoxel(p));
                     brush.begin(p);
                 }
             }

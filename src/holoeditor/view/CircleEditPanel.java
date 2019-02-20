@@ -43,14 +43,11 @@ public class CircleEditPanel extends JPanel
     }
     
     private void wireServiceEvents() {
-        editorService.addListener(new EditorService.Listener() {
+        editorService.addListener(new EditorService.Adapter() {
             @Override
             public void frameChanged() {
                 repaint();
             }
-
-            @Override
-            public void thetaChanged(int theta) { }
 
             @Override
             public void yChanged(int y) {
@@ -92,7 +89,6 @@ public class CircleEditPanel extends JPanel
             public void mousePressed(MouseEvent e) {
                 PointTYR p = fromScreenToGrid(e.getPoint());
                 if (p.r < R) {
-                    brush.setColor(!frame.getVoxel(p));
                     brush.begin(p);
                 } else {
                     dragHandleTheta = p.t;

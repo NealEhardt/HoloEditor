@@ -22,6 +22,14 @@ public class EditorService
         void frameChanged();
         void thetaChanged(int theta);
         void yChanged(int y);
+        void colorChanged();
+    }
+
+    public static abstract class Adapter implements Listener {
+        public void frameChanged() {}
+        public void thetaChanged(int theta) {}
+        public void yChanged(int y) {}
+        public void colorChanged() {}
     }
     
     public EditorService(DisplayService displayService) {
@@ -76,6 +84,12 @@ public class EditorService
     public void commitChanges() {
         for (Listener l : listeners) {
             l.frameChanged();
+        }
+    }
+
+    public void changeColor() {
+        for (Listener l : listeners) {
+            l.colorChanged();
         }
     }
 }

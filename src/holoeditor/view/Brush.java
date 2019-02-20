@@ -27,15 +27,16 @@ public class Brush {
         this.delegate = delegate;
     }
     
-    boolean isPainting;
+    private boolean isPainting;
     boolean isPainting() {
         return isPainting;
     }
 
     private double weight = 2;
-    void setWeight(double weight) { this.weight = weight; System.out.println("weight " + weight); }
+    void setWeight(double weight) { this.weight = weight; }
     
-    boolean color;
+    private boolean color = true;
+    boolean getColor() { return color; }
     void setColor(boolean color) {
         this.color = color;
     }
