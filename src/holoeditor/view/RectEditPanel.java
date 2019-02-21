@@ -1,11 +1,10 @@
 package holoeditor.view;
 
 import holoeditor.model.*;
+import holoeditor.model.Frame;
 import holoeditor.service.EditorService;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import javax.swing.*;
@@ -207,12 +206,14 @@ public class RectEditPanel extends JPanel
         Line2D line = new Line2D.Float();
         for (int x = -R; x <= R; x++) {
             line.setLine(x, 0, x, H);
+            g.setStroke(new BasicStroke(x == -R/2 || x == 0 || x == R/2 ? 3 : 1));
             g.draw(gridToScreenTransform.createTransformedShape(line));
         }
         
         // horizontal lines
         for (int y = 0; y <= H; y++) {
             line.setLine(-R, y, R, y);
+            g.setStroke(new BasicStroke(y == H/4 || y == H/2 || y == 3*H/4 ? 3 : 1));
             g.draw(gridToScreenTransform.createTransformedShape(line));
         }
     }

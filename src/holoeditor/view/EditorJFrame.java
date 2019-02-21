@@ -49,7 +49,7 @@ public class EditorJFrame extends JFrame
         initComponents();
         initListeners();
 
-        setSize(700, 400);
+        setSize(800, 500);
     }
     
     private void initListeners() {

@@ -1,12 +1,10 @@
 package holoeditor.view;
 
+import holoeditor.model.*;
 import holoeditor.model.Frame;
-import holoeditor.model.PointTYR;
 import holoeditor.service.EditorService;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import javax.swing.*;
@@ -196,6 +194,7 @@ public class CircleEditPanel extends JPanel
             double xUnit = Math.cos(t);
             double yUnit = Math.sin(t);
             line.setLine(r*xUnit, r*yUnit, R*xUnit, R*yUnit);
+            g.setStroke(new BasicStroke(theta % (C/8) == 0 ? 2 : 1));
             g.draw(gridToScreenTransform.createTransformedShape(line));
         }
         
@@ -203,6 +202,7 @@ public class CircleEditPanel extends JPanel
         Ellipse2D ellipse = new Ellipse2D.Float();
         for (int r = 1; r <= R; r++) {
             ellipse.setFrame(-r, -r, r*2, r*2);
+            g.setStroke(new BasicStroke(r % (R/4) == 0 ? 2 : 1));
             g.draw(gridToScreenTransform.createTransformedShape(ellipse));
         }
     }
