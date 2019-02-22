@@ -14,17 +14,15 @@ import javax.swing.*;
  *
  * @author nehardt
  */
-public class EditorJFrame extends JFrame
-{
+public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
     EditorService editorService;
     DisplayService displayService;
     FileService fileService;
     Brush brush;
 
-    EditorMenuBar menuBar;
-    CircleEditPanel circlePanel;
-    RectEditPanel rectPanel;
-    ColorChooser colorChooser;
+    private ColorChooser colorChooser;
+    private JLabel statusLabel;
+    private JSlider weightSlider;
     
     public EditorJFrame(
             EditorService editorService,
@@ -79,13 +77,6 @@ public class EditorJFrame extends JFrame
 
         editorService.addListener(new EditorService.Adapter() {
             @Override
-            public void colorChanged() {
-                boolean nextColor = !brush.getColor();
-                brush.setColor(nextColor);
-                colorChooser.setColor(nextColor);
-            }
-
-            @Override
             public void frameChanged() {
                 displayService.setFrame(editorService.getFrame());
             }
@@ -102,13 +93,13 @@ public class EditorJFrame extends JFrame
     private void initComponents() {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        menuBar = new EditorMenuBar(editorService, fileService);
+        EditorMenuBar menuBar = new EditorMenuBar(this, fileService);
         setJMenuBar(menuBar);
 
         JPanel centerPanel = new JPanel(new java.awt.GridLayout(1, 2));
-        circlePanel = new CircleEditPanel(editorService, brush);
+        CircleEditPanel circlePanel = new CircleEditPanel(editorService, brush);
         centerPanel.add(circlePanel);
-        rectPanel = new RectEditPanel(editorService, brush);
+        RectEditPanel rectPanel = new RectEditPanel(editorService, brush);
         centerPanel.add(rectPanel);
         getContentPane().add(centerPanel, java.awt.BorderLayout.CENTER);
 
@@ -130,7 +121,7 @@ public class EditorJFrame extends JFrame
 
         colorChooser = new ColorChooser(color -> {
             if (color != brush.getColor()) {
-                editorService.changeColor();
+                changeColor();
             }
         });
         footerPanel.add(colorChooser);
@@ -147,13 +138,24 @@ public class EditorJFrame extends JFrame
         weightSlider.setLabelTable(table);
         weightSlider.setPaintLabels(true);
         weightSlider.setPaintTicks(true);
-        weightSlider.addChangeListener(
-                e -> brush.setWeight(weightSlider.getValue() / (double)K));
+        weightSlider.addChangeListener(e -> {
+            brush.setWeight(weightSlider.getValue() / (double)K);
+            repaint();
+        });
         footerPanel.add(weightSlider);
 
         return footerPanel;
     }
 
-    private JLabel statusLabel;
-    private JSlider weightSlider;
+    @Override
+    public void changeColor() {
+        boolean nextColor = !brush.getColor();
+        brush.setColor(nextColor);
+        colorChooser.setColor(nextColor);
+    }
+
+    @Override
+    public void changeWeight(int amount) {
+        weightSlider.setValue(weightSlider.getValue() + amount);
+    }
 }

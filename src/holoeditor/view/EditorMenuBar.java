@@ -12,14 +12,17 @@ import javax.swing.*;
  * @author nehardt
  */
 public class EditorMenuBar extends JMenuBar {
-    EditorService editorService;
-    FileService fileService;
+    public interface Delegate {
+        void changeColor();
+        void changeWeight(int amount);
+    }
+
+    private FileService fileService;
+    private Delegate delegate;
     
-    public EditorMenuBar(
-            EditorService editorService,
-            FileService fileService) {
-        this.editorService = editorService;
+    public EditorMenuBar(Delegate delegate, FileService fileService) {
         this.fileService = fileService;
+        this.delegate = delegate;
 
         this.add(newFileMenu());
         this.add(newEditMenu());
@@ -58,10 +61,33 @@ public class EditorMenuBar extends JMenuBar {
     private JMenu newEditMenu() {
         JMenu menu = new JMenu("Edit");
 
-        JMenuItem colorItem = new JMenuItem("Change Color");
+        // Ctrl on Win and Nix; Cmd on Mac
+        int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+        JMenuItem colorItem = new JMenuItem("Change color");
         colorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
-        colorItem.addActionListener((e) -> editorService.changeColor());
+        colorItem.addActionListener((e) -> delegate.changeColor());
         menu.add(colorItem);
+
+        JMenuItem decreaseItem = new JMenuItem("Decrease brush weight");
+        decreaseItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0));
+        decreaseItem.addActionListener((e) -> delegate.changeWeight(-1));
+        menu.add(decreaseItem);
+
+        JMenuItem decrease5Item = new JMenuItem("Decrease brush weight x5");
+        decrease5Item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, menuMask));
+        decrease5Item.addActionListener((e) -> delegate.changeWeight(-5));
+        menu.add(decrease5Item);
+
+        JMenuItem increaseItem = new JMenuItem("Increase brush weight");
+        increaseItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_CLOSE_BRACKET, 0));
+        increaseItem.addActionListener((e) -> delegate.changeWeight(1));
+        menu.add(increaseItem);
+
+        JMenuItem increase5Item = new JMenuItem("Increase brush weight x5");
+        increase5Item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_CLOSE_BRACKET, menuMask));
+        increase5Item.addActionListener((e) -> delegate.changeWeight(5));
+        menu.add(increase5Item);
 
         return menu;
     }
