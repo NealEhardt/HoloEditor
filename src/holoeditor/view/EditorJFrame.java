@@ -136,7 +136,7 @@ public class EditorJFrame extends JFrame
         footerPanel.add(colorChooser);
 
         int K = 10; // Slider uses integers, so 1 slider tick = 0.1 brush weight.
-        int MIN = 8; // When weight < sqrt(6)/4 ≈ 0.61, the Brush has issues.
+        int MIN = 2;
         weightSlider = new JSlider(MIN, 5*K, 2*K);
         weightSlider.setMajorTickSpacing(2);
         weightSlider.setMinorTickSpacing(1);

@@ -149,7 +149,7 @@ public class RectEditPanel extends JPanel
         Point2D result = screenToGridTransform.transform(p, null);
         double r = result.getX();
         double y = result.getY();
-        return new PointTYR(theta, y, r);
+        return new PointTYR(theta + 0.5, y, r);
     }
 
     private boolean isInSlice(PointTYR p) {

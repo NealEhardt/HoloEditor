@@ -4,15 +4,14 @@ import holoeditor.model.*;
 import holoeditor.model.Frame;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 
 /**
  * Paints sphere around target point, via Delegate.
  * Over the lifecycle of a mouse interaction, call:
- *   mousePressed: brush.begin
- *   mouseDragged: brush.move
- *   mouseReleased: brush.end
+ *   mousePressed: brush.begin()
+ *   mouseDragged: brush.move()
+ *   mouseReleased: brush.end()
  * @author Neal Ehardt
  */
 public class Brush {
@@ -58,9 +57,12 @@ public class Brush {
     
     public void begin(PointTYR point) {
         isPainting = true;
+
+        PointXYZ target = new PointXYZ(point);
+        delegate.setVoxel(point, color); // always color the voxel nearest to mouse
         
         PointTYR iter = new PointTYR(0.5, roundHalf(point.y), roundHalf(point.r));
-        PointXYZ target = new PointXYZ(point);
+
         for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
             iterateY(iter, target);
         }

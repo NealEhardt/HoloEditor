@@ -142,7 +142,7 @@ public class CircleEditPanel extends JPanel
             angle += 2*Math.PI;
         }
         double t = angle * C / (2*Math.PI);
-        return new PointTYR(t, y, r);
+        return new PointTYR(t, y + 0.5, r);
     }
     
     @Override
