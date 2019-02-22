@@ -32,7 +32,11 @@ public class Brush {
     }
 
     private double weight = 2;
-    void setWeight(double weight) { this.weight = weight; }
+    private double weightSq = weight * weight;
+    void setWeight(double weight) {
+        this.weight = weight;
+        weightSq = weight * weight;
+    }
     
     private boolean color = true;
     boolean getColor() { return color; }
@@ -80,17 +84,17 @@ public class Brush {
     }
 
     void iterateY(PointTYR iter, PointXYZ target) {
-        if (iter.distance(target) < weight) {
+        if (iter.distanceSq(target) < weightSq) {
             iterateR(iter, target);
 
             double startY = iter.y;
             iter.y++;
-            while (iter.distance(target) < weight) {
+            while (iter.distanceSq(target) < weightSq) {
                 iterateR(iter, target);
                 iter.y++;
             }
             iter.y = startY - 1;
-            while (iter.distance(target) < weight) {
+            while (iter.distanceSq(target) < weightSq) {
                 iterateR(iter, target);
                 iter.y--;
             }
@@ -103,12 +107,12 @@ public class Brush {
 
         double startR = iter.r;
         iter.r++;
-        while (iter.distance(target) < weight) {
+        while (iter.distanceSq(target) < weightSq) {
             delegate.setVoxel(iter, color);
             iter.r++;
         }
         iter.r = startR - 1;
-        while (iter.distance(target) < weight) {
+        while (iter.distanceSq(target) < weightSq) {
             delegate.setVoxel(iter, color);
             iter.r--;
         }

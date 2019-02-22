@@ -28,6 +28,10 @@ public class PointTYR implements Cloneable {
     public double distance(PointXYZ p) {
         return new PointXYZ(this).distance(p);
     }
+
+    public double distanceSq(PointXYZ p) {
+        return new PointXYZ(this).distanceSq(p);
+    }
     
     @Override
     public String toString() {
