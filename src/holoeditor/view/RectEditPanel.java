@@ -100,14 +100,14 @@ public class RectEditPanel extends JPanel
                     editorService.setY(dragHandleY.intValue());
                     repaint();
                 } else if (isInSlice(p)) {
-                    brush.begin(p);
+                    brush.begin(p, Brush.Plane.YR);
                 }
             }
             @Override
             public void mouseReleased(MouseEvent e) {
                 PointTYR p = fromScreenToGrid(e.getPoint());
                 if (brush.isPainting()) {
-                    brush.end(p);
+                    brush.end(p, Brush.Plane.YR);
                 }
                 dragHandleY = null;
                 repaint();
@@ -124,7 +124,7 @@ public class RectEditPanel extends JPanel
                 PointTYR p = fromScreenToGrid(e.getPoint());
                 
                 if (brush.isPainting()) {
-                    brush.move(p);
+                    brush.move(p, Brush.Plane.YR);
                 }
                 if (dragHandleY != null) {
                     dragHandleY = Math.max(0, Math.min(H-.01, p.y));

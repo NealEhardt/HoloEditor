@@ -87,7 +87,7 @@ public class CircleEditPanel extends JPanel
             public void mousePressed(MouseEvent e) {
                 PointTYR p = fromScreenToGrid(e.getPoint());
                 if (p.r < R) {
-                    brush.begin(p);
+                    brush.begin(p, Brush.Plane.TR);
                 } else {
                     dragHandleTheta = p.t;
                     editorService.setTheta(dragHandleTheta.intValue());
@@ -99,7 +99,7 @@ public class CircleEditPanel extends JPanel
             public void mouseReleased(MouseEvent e) {
                 PointTYR p = fromScreenToGrid(e.getPoint());
                 if (brush.isPainting()) {
-                    brush.end(p);
+                    brush.end(p, Brush.Plane.TR);
                 }
                 dragHandleTheta = null;
                 repaint();
@@ -111,7 +111,7 @@ public class CircleEditPanel extends JPanel
                 PointTYR p = fromScreenToGrid(e.getPoint());
                 
                 if (brush.isPainting()) {
-                    brush.move(p);
+                    brush.move(p, Brush.Plane.TR);
                 }
                 if (dragHandleTheta != null) {
                     dragHandleTheta = p.t;
@@ -205,6 +205,7 @@ public class CircleEditPanel extends JPanel
             g.setStroke(new BasicStroke(r % (R/4) == 0 ? 2 : 1));
             g.draw(gridToScreenTransform.createTransformedShape(ellipse));
         }
+        g.setStroke(new BasicStroke(1));
     }
     
     void paintHandle(Graphics2D g) {

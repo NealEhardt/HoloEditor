@@ -126,11 +126,34 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
         });
         footerPanel.add(colorChooser);
 
-        int K = 10; // Slider uses integers, so 1 slider tick = 0.1 brush weight.
-        int MIN = 2;
+        footerPanel.add(newShapePanel());
+
+        footerPanel.add(newWeightSlider());
+
+        return footerPanel;
+    }
+
+    JPanel newShapePanel() {
+        JPanel shapePanel = new JPanel();
+        shapePanel.setLayout(new BoxLayout(shapePanel, BoxLayout.PAGE_AXIS));
+
+        shapePanel.add(new JLabel("Brush shape"));
+
+        JComboBox<String> shapeBox = new JComboBox<>(new String[]{"Circle", "Sphere"});
+        shapeBox.addActionListener(e -> {
+            brush.setShape(shapeBox.getSelectedIndex() == 0
+                    ? Brush.Shape.Circle : Brush.Shape.Sphere);
+        });
+        shapePanel.add(shapeBox);
+
+        return shapePanel;
+    }
+
+    JSlider newWeightSlider() {
+        int K = 5; // Slider uses integers, so 1 slider tick = 0.2 brush weight.
+        int MIN = 1;
         weightSlider = new JSlider(MIN, 5*K, 2*K);
-        weightSlider.setMajorTickSpacing(2);
-        weightSlider.setMinorTickSpacing(1);
+        weightSlider.setMajorTickSpacing(1);
         Hashtable<Integer, JComponent> table = new Hashtable<>();
         for (int i = K; i <= weightSlider.getMaximum(); i += K) {
             table.put(i, new JLabel(Integer.toString(i/K)));
@@ -142,9 +165,7 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
             brush.setWeight(weightSlider.getValue() / (double)K);
             repaint();
         });
-        footerPanel.add(weightSlider);
-
-        return footerPanel;
+        return weightSlider;
     }
 
     @Override

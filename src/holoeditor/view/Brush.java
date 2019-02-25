@@ -37,7 +37,13 @@ public class Brush {
         this.weight = weight;
         weightSq = weight * weight;
     }
-    
+
+    public enum Shape { Circle, Sphere }
+    private Shape shape  = Shape.Circle;
+    void setShape(Shape shape) {
+        this.shape = shape;
+    }
+
     private boolean color = true;
     boolean getColor() { return color; }
     void setColor(boolean color) {
@@ -53,33 +59,57 @@ public class Brush {
 
         g.setColor(Color.orange);
         g.draw(new Ellipse2D.Double(x, y, 2 * r, 2 * r));
+
+        if (shape == Shape.Sphere) {
+            g.draw(new Ellipse2D.Double(x + r/2, y, r, 2 * r));
+            g.draw(new Ellipse2D.Double(x, y + r/2, 2 * r, r));
+        }
     }
 
     double roundHalf(double v) {
         return Math.floor(v) + 0.5;
     }
+
+    public enum Plane { TR, YR }
     
-    public void begin(PointTYR point) {
+    public void begin(PointTYR point, Plane plane) {
         isPainting = true;
 
         PointXYZ target = new PointXYZ(point);
         delegate.setVoxel(point, color); // always color the voxel nearest to mouse
         
-        PointTYR iter = new PointTYR(0.5, roundHalf(point.y), roundHalf(point.r));
+        PointTYR iter = new PointTYR(
+                roundHalf(point.t), roundHalf(point.y), roundHalf(point.r));
 
-        for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
-            iterateY(iter, target);
+        switch (shape) {
+            case Circle:
+                switch (plane) {
+                    case TR:
+                        for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
+                            if (iter.distanceSq(target) < weightSq) {
+                                iterateR(iter, target);
+                            }
+                        }
+                        break;
+                    case YR:
+                        iterateY(iter, target);
+                }
+                break;
+            case Sphere:
+                for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
+                    iterateY(iter, target);
+                }
         }
 
         delegate.commitChanges();
     }
 
-    public void move(PointTYR point) {
-        begin(point); // TODO: interpolate
+    public void move(PointTYR point, Plane plane) {
+        begin(point, plane); // TODO: interpolate
     }
 
-    public void end(PointTYR point) {
-        move(point);
+    public void end(PointTYR point, Plane plane) {
+        move(point, plane);
         isPainting = false;
     }
 
