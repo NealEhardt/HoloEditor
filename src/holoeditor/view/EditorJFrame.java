@@ -128,9 +128,32 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
 
         footerPanel.add(newShapePanel());
 
+        footerPanel.add(newSymmetryPanel());
+
         footerPanel.add(newWeightSlider());
 
         return footerPanel;
+    }
+
+    JPanel newSymmetryPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+
+        panel.add(new JLabel("Symmetry"));
+
+        JComboBox<String> box = new JComboBox<>(new String[]{
+                "None", "8 Straight", "8 Mirror"});
+        box.addActionListener(e -> {
+            Brush.Symmetry s = Brush.Symmetry.None;
+            switch(box.getSelectedIndex()) {
+                case 1: s = Brush.Symmetry.S8Straight; break;
+                case 2: s = Brush.Symmetry.S8Mirror; break;
+            }
+            brush.setSymmetry(s);
+        });
+        panel.add(box);
+
+        return panel;
     }
 
     JPanel newShapePanel() {

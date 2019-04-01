@@ -44,6 +44,12 @@ public class Brush {
         this.shape = shape;
     }
 
+    public enum Symmetry { None, S8Straight, S8Mirror }
+    private Symmetry symmetry;
+    void setSymmetry(Symmetry symmetry) {
+        this.symmetry = symmetry;
+    }
+
     private boolean color = true;
     boolean getColor() { return color; }
     void setColor(boolean color) {
@@ -71,13 +77,11 @@ public class Brush {
     }
 
     public enum Plane { TR, YR }
-    
-    public void begin(PointTYR point, Plane plane) {
-        isPainting = true;
 
-        PointXYZ target = new PointXYZ(point);
-        delegate.setVoxel(point, color); // always color the voxel nearest to mouse
-        
+    private void brushPoint(PointTYR point, Plane plane) {
+        PointXYZ target = new PointXYZ(point); // XYZ for distance calculations.
+        delegate.setVoxel(point, color); // Always color the voxel nearest to mouse.
+
         PointTYR iter = new PointTYR(
                 roundHalf(point.t), roundHalf(point.y), roundHalf(point.r));
 
@@ -99,6 +103,28 @@ public class Brush {
                 for (iter.t = 0.5; iter.t < Frame.Circumference; iter.t++) {
                     iterateY(iter, target);
                 }
+        }
+    }
+    
+    public void begin(PointTYR point, Plane plane) {
+        isPainting = true;
+
+        brushPoint(point, plane);
+
+        if (symmetry == Symmetry.S8Straight) {
+            double q = Frame.Circumference / 8.0;
+            for (int i = 1; i < 8; i++) {
+                brushPoint(new PointTYR(point.t + i*q, point.y, point.r), plane);
+            }
+        } else if (symmetry == Symmetry.S8Mirror) {
+            double q = Frame.Circumference / 4.0;
+            for (int i = 1; i < 4; i++) {
+                brushPoint(new PointTYR(point.t + i*q, point.y, point.r), plane);
+            }
+            double u = -(point.t % q);
+            for (int i = 0; i < 4; i++) {
+                brushPoint(new PointTYR(u + i*q, point.y, point.r), plane);
+            }
         }
 
         delegate.commitChanges();
