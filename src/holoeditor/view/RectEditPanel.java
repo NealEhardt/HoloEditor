@@ -169,12 +169,7 @@ public class RectEditPanel extends JPanel
         
         // paint children
         paintGrid(g2);
-        Point p = getMousePosition();
-        if (p != null && dragHandleY == null) {
-            if (isInSlice(fromScreenToGrid(p)) || brush.isPainting()) {
-                brush.paintPreview(g2, p, gridToScreenTransform.getScaleX());
-            }
-        }
+        paintBrushPreview(g2);
         paintHandle(g2);
     }
     
@@ -215,6 +210,21 @@ public class RectEditPanel extends JPanel
             line.setLine(-R, y, R, y);
             g.setStroke(new BasicStroke(y == H/4 || y == H/2 || y == 3*H/4 ? 3 : 1));
             g.draw(gridToScreenTransform.createTransformedShape(line));
+        }
+    }
+
+    void paintBrushPreview(Graphics2D g) {
+        Point p = getMousePosition();
+        if (p != null && dragHandleY == null) {
+            PointTYR q = fromScreenToGrid(p);
+            if (isInSlice(q) || brush.isPainting()) {
+                double scale = gridToScreenTransform.getScaleX();
+                brush.paintPreview(g, p, scale);
+                if (brush.getSymmetries() % 2 == 0) {
+                    p.x = getWidth() - p.x;
+                    brush.paintPreview(g, p, scale);
+                }
+            }
         }
     }
     

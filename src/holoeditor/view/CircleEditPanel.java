@@ -158,13 +158,7 @@ public class CircleEditPanel extends JPanel
         
         // paint children
         paintGrid(g2);
-        Point p = getMousePosition();
-        if (p != null && dragHandleTheta == null) {
-            PointTYR q = fromScreenToGrid(p);
-            if (q.r < R || brush.isPainting()) {
-                brush.paintPreview(g2, p, gridToScreenTransform.getScaleX());
-            }
-        }
+        paintBrushPreview(g2);
         paintHandle(g2);
     }
     
@@ -206,6 +200,25 @@ public class CircleEditPanel extends JPanel
             g.draw(gridToScreenTransform.createTransformedShape(ellipse));
         }
         g.setStroke(new BasicStroke(1));
+    }
+
+    void paintBrushPreview(Graphics2D g) {
+        Point p = getMousePosition();
+        if (p != null && dragHandleTheta == null) {
+            PointTYR q = fromScreenToGrid(p);
+            if (q.r < R || brush.isPainting()) {
+                double scale = gridToScreenTransform.getScaleX();
+                PointTYR[] points = brush.getPreviewPoints(q);
+                Point pi = new Point();
+                for (PointTYR qi : points) {
+                    double t = qi.t * 2*Math.PI / C;
+                    double x = qi.r * Math.cos(t);
+                    double y = qi.r * Math.sin(t);
+                    gridToScreenTransform.transform(new Point2D.Double(x, y), pi);
+                    brush.paintPreview(g, pi, scale);
+                }
+            }
+        }
     }
     
     void paintHandle(Graphics2D g) {

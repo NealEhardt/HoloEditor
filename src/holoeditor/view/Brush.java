@@ -26,12 +26,12 @@ public class Brush {
         this.delegate = delegate;
     }
     
-    private boolean isPainting;
+    private PointTYR previousPoint = null;
     boolean isPainting() {
-        return isPainting;
+        return previousPoint != null;
     }
 
-    private double weight = 2;
+    private double weight = 1;
     private double weightSq = weight * weight;
     void setWeight(double weight) {
         this.weight = weight;
@@ -44,16 +44,54 @@ public class Brush {
         this.shape = shape;
     }
 
-    public enum Symmetry { None, S8Straight, S8Mirror }
-    private Symmetry symmetry;
-    void setSymmetry(Symmetry symmetry) {
-        this.symmetry = symmetry;
+    private int symmetries = 1;
+    int getSymmetries() { return symmetries; }
+    void setSymmetries(int symmetries) {
+        this.symmetries = symmetries;
+    }
+
+    private boolean isMirror;
+    void setMirror(boolean isMirror) {
+        this.isMirror = isMirror;
     }
 
     private boolean color = true;
     boolean getColor() { return color; }
     void setColor(boolean color) {
         this.color = color;
+    }
+
+    void setVoxel(PointTYR point, boolean color) {
+        delegate.setVoxel(point, color);
+
+        double q = Frame.Circumference / (double)symmetries;
+        for (int i = 1; i < symmetries; i++) {
+            delegate.setVoxel(new PointTYR(point.t + i*q, point.y, point.r), color);
+        }
+        if (isMirror) {
+            double u = -(point.t % q);
+            for (int i = 0; i < symmetries; i++) {
+                PointTYR p2 = new PointTYR(u + i * q, point.y, point.r);
+                delegate.setVoxel(p2, color);
+            }
+        }
+    }
+
+    PointTYR[] getPreviewPoints(PointTYR mouse) {
+        int length = symmetries * (isMirror ? 2 : 1);
+        PointTYR[] points = new PointTYR[length];
+
+        double q = Frame.Circumference / (double)symmetries;
+        for (int i = 0; i < symmetries; i++) {
+            points[i] = new PointTYR(mouse.t + i*q, mouse.y, mouse.r);
+        }
+        if (isMirror) {
+            double u = -(mouse.t % q);
+            for (int i = 0; i < symmetries; i++) {
+                points[symmetries + i] = new PointTYR(u + i * q, mouse.y, mouse.r);
+            }
+        }
+        return points;
     }
 
     void paintPreview(Graphics2D g, Point mousePosition, double scale) {
@@ -80,7 +118,7 @@ public class Brush {
 
     private void brushPoint(PointTYR point, Plane plane) {
         PointXYZ target = new PointXYZ(point); // XYZ for distance calculations.
-        delegate.setVoxel(point, color); // Always color the voxel nearest to mouse.
+        setVoxel(point, color); // Always color the voxel nearest to mouse.
 
         PointTYR iter = new PointTYR(
                 roundHalf(point.t), roundHalf(point.y), roundHalf(point.r));
@@ -105,38 +143,49 @@ public class Brush {
                 }
         }
     }
-    
-    public void begin(PointTYR point, Plane plane) {
-        isPainting = true;
 
-        brushPoint(point, plane);
-
-        if (symmetry == Symmetry.S8Straight) {
-            double q = Frame.Circumference / 8.0;
-            for (int i = 1; i < 8; i++) {
-                brushPoint(new PointTYR(point.t + i*q, point.y, point.r), plane);
-            }
-        } else if (symmetry == Symmetry.S8Mirror) {
-            double q = Frame.Circumference / 4.0;
-            for (int i = 1; i < 4; i++) {
-                brushPoint(new PointTYR(point.t + i*q, point.y, point.r), plane);
-            }
-            double u = -(point.t % q);
-            for (int i = 0; i < 4; i++) {
-                brushPoint(new PointTYR(u + i*q, point.y, point.r), plane);
+    void brushInterpolating(PointTYR point, Plane plane) {
+        PointXYZ p = new PointXYZ(previousPoint);
+        PointXYZ target = new PointXYZ(point);
+        double dx = target.x - p.x;
+        double dy = target.y - p.y;
+        double dz = target.z - p.z;
+        double distanceSq = dx * dx + dy * dy + dz * dz;
+        if (distanceSq > 1) {
+            double dist = Math.sqrt(distanceSq);
+            dx /= dist;
+            dy /= dist;
+            dz /= dist;
+            for (int i = 1; i < dist; i++) {
+                p.x += dx;
+                p.y += dy;
+                p.z += dz;
+                brushPoint(new PointTYR(p), plane);
             }
         }
+
+        brushPoint(point, plane);
+    }
+    
+    public void begin(PointTYR point, Plane plane) {
+        previousPoint = point;
+        brushPoint(point, plane);
 
         delegate.commitChanges();
     }
 
     public void move(PointTYR point, Plane plane) {
-        begin(point, plane); // TODO: interpolate
+        brushInterpolating(point, plane);
+        previousPoint = point;
+
+        delegate.commitChanges();
     }
 
     public void end(PointTYR point, Plane plane) {
-        move(point, plane);
-        isPainting = false;
+        brushInterpolating(point, plane);
+        previousPoint = null;
+
+        delegate.commitChanges();
     }
 
     void iterateY(PointTYR iter, PointXYZ target) {
@@ -159,17 +208,17 @@ public class Brush {
     }
     
     void iterateR(PointTYR iter, PointXYZ target) {
-        delegate.setVoxel(iter, color);
+        setVoxel(iter, color);
 
         double startR = iter.r;
         iter.r++;
         while (iter.distanceSq(target) < weightSq) {
-            delegate.setVoxel(iter, color);
+            setVoxel(iter, color);
             iter.r++;
         }
         iter.r = startR - 1;
         while (iter.distanceSq(target) < weightSq) {
-            delegate.setVoxel(iter, color);
+            setVoxel(iter, color);
             iter.r--;
         }
         iter.r = startR;

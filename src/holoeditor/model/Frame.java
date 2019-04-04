@@ -57,15 +57,15 @@ public class Frame implements Serializable
             r *= -1;
             t += Circumference / 2;
         }
-        t = Math.floorMod(t, Circumference);
+        int tMod = Math.floorMod(t, Circumference);
         if (y >= 0 && y < Height && r < Radius) {
-            data[t][y][r] = color;
+            data[tMod][y][r] = color;
         }
     }
 
     public void setVoxel(PointTYR point, boolean color) {
         boolean q = point.r < 0;
-        setVoxel((int)(q ? point.t + Circumference/2 : point.t),
+        setVoxel((int)Math.floor(q ? point.t + Circumference/2 : point.t),
                 (int)point.y,
                 (int)(q ? -point.r : point.r),
                 color);

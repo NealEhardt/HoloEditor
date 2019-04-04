@@ -20,9 +20,10 @@ public class PointTYR implements Cloneable {
         this.y = y;
         this.r = r;
     }
-
-    public double distance(PointTYR p) {
-        return distance(new PointXYZ(p));
+    public PointTYR(PointXYZ point) {
+        t = Math.atan2(point.z, point.x) * Frame.Circumference / (2*Math.PI);
+        y = point.y;
+        r = Math.sqrt(point.x * point.x + point.z * point.z);
     }
 
     public double distance(PointXYZ p) {

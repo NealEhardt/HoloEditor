@@ -125,11 +125,8 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
             }
         });
         footerPanel.add(colorChooser);
-
         footerPanel.add(newShapePanel());
-
         footerPanel.add(newSymmetryPanel());
-
         footerPanel.add(newWeightSlider());
 
         return footerPanel;
@@ -137,21 +134,25 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
 
     JPanel newSymmetryPanel() {
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 
-        panel.add(new JLabel("Symmetry"));
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
+        leftPanel.add(new JLabel("Symmetries"));
 
         JComboBox<String> box = new JComboBox<>(new String[]{
-                "None", "8 Straight", "8 Mirror"});
+                "1", "2", "3", "4", "5", "6", "7", "8"});
         box.addActionListener(e -> {
-            Brush.Symmetry s = Brush.Symmetry.None;
-            switch(box.getSelectedIndex()) {
-                case 1: s = Brush.Symmetry.S8Straight; break;
-                case 2: s = Brush.Symmetry.S8Mirror; break;
-            }
-            brush.setSymmetry(s);
+            brush.setSymmetries(box.getSelectedIndex() + 1);
         });
-        panel.add(box);
+        leftPanel.add(box);
+        panel.add(leftPanel);
+
+        JCheckBox checkBox = new JCheckBox("Mirror Vertical");
+        checkBox.addActionListener(e -> {
+            brush.setMirror(checkBox.isSelected());
+        });
+        panel.add(checkBox);
 
         return panel;
     }
@@ -175,7 +176,7 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
     JSlider newWeightSlider() {
         int K = 5; // Slider uses integers, so 1 slider tick = 0.2 brush weight.
         int MIN = 1;
-        weightSlider = new JSlider(MIN, 5*K, 2*K);
+        weightSlider = new JSlider(MIN, 5*K, K);
         weightSlider.setMajorTickSpacing(1);
         Hashtable<Integer, JComponent> table = new Hashtable<>();
         for (int i = K; i <= weightSlider.getMaximum(); i += K) {
