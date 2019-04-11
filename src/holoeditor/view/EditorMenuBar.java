@@ -65,7 +65,7 @@ public class EditorMenuBar extends JMenuBar {
         int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
         JMenuItem colorItem = new JMenuItem("Change color");
-        colorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
+        colorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0));
         colorItem.addActionListener((e) -> delegate.changeColor());
         menu.add(colorItem);
 

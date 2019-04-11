@@ -17,12 +17,17 @@ import javax.swing.JFrame;
 public class HoloEditor {
     static DisplayService displayService;
     
-    static int windowCount = 0;
-    
     public static void main(String[] args) {
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting ">
-        /* If system look and feel is not available, stay with the default look and feel.
-         */
+        trySetSystemLookAndFeel();
+
+        java.awt.EventQueue.invokeLater(() -> {
+            displayService = new DisplayService();
+            makeNewWindow();
+            displayService.start();
+        });
+    }
+
+    private static void trySetSystemLookAndFeel() {
         try {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             String systemLookAndFeel = UIManager.getSystemLookAndFeelClassName();
@@ -37,14 +42,9 @@ public class HoloEditor {
         } catch (Exception ex) {
             Logger.getLogger(EditorJFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-        
-        java.awt.EventQueue.invokeLater(() -> {
-            displayService = new DisplayService();
-            makeNewWindow();
-            displayService.start();
-        });
     }
+
+    static int windowCount = 0;
     
     public static void makeNewWindow() {
         makeNewWindow(null, null);
@@ -82,7 +82,8 @@ public class HoloEditor {
                 }
             }
         });
-        
+
+        editorFrame.setLocationByPlatform(true); // stagger new windows
         editorFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         editorFrame.setVisible(true);
     }
