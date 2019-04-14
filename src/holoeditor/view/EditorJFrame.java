@@ -164,6 +164,7 @@ public class EditorJFrame extends JFrame implements EditorMenuBar.Delegate {
         shapePanel.add(new JLabel("Brush shape"));
 
         JComboBox<String> shapeBox = new JComboBox<>(new String[]{"Circle", "Sphere"});
+        shapeBox.setSelectedIndex(1);
         shapeBox.addActionListener(e -> {
             brush.setShape(shapeBox.getSelectedIndex() == 0
                     ? Brush.Shape.Circle : Brush.Shape.Sphere);

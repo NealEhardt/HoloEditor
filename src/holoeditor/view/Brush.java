@@ -39,7 +39,7 @@ public class Brush {
     }
 
     public enum Shape { Circle, Sphere }
-    private Shape shape  = Shape.Circle;
+    private Shape shape  = Shape.Sphere;
     void setShape(Shape shape) {
         this.shape = shape;
     }
